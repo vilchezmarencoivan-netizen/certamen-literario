@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Certamen Literario</title>
+<meta name="robots" content="noindex">
+<style>
+:root{
+  --bg:#f5f3ee; --surface:#ffffff; --surface-2:#faf8f4; --ink:#1f2328; --muted:#5d6670;
+  --line:#e2ddd3; --brand:#1d4e89; --brand-ink:#ffffff; --brand-soft:#e7eef8;
+  --ok:#1f7a4d; --ok-soft:#e3f3ea; --bad:#b3261e; --bad-soft:#fbe7e5; --warn:#8a5a00; --warn-soft:#fff3d6;
+  --radius:10px; --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.05);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+button,input,select,textarea{font:inherit;color:inherit}
+.hidden{display:none!important}
+.wrap{max-width:1000px;margin:0 auto;padding:0 16px}
+header.top{background:var(--brand);color:var(--brand-ink)}
+header.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;flex-wrap:wrap}
+header.top h1{font-size:1.15rem;margin:0}
+header.top p{margin:0;font-size:.85rem;opacity:.85}
+.who{display:flex;align-items:center;gap:10px;font-size:.9rem}
+.btn{border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:600}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.btn.primary:hover{filter:brightness(1.1)}
+.btn.danger{color:var(--bad);border-color:#e9b9b5}
+.btn.small{padding:4px 10px;font-size:.85rem}
+.btn.ghost{background:transparent;color:inherit;border-color:rgba(255,255,255,.5)}
+.btn:disabled{opacity:.6;cursor:wait}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin:16px 0}
+.banner{background:var(--warn-soft);color:var(--warn);border:1px solid #f0d58f;padding:10px 14px;border-radius:8px;margin-top:16px;font-size:.9rem}
+label.f{display:block;font-weight:600;margin:12px 0 4px;font-size:.92rem}
+input[type=text],input[type=password],select,textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);outline-offset:1px}
+textarea{min-height:90px;resize:vertical}
+.err{color:var(--bad);font-size:.9rem;margin-top:10px;min-height:1.2em}
+#login{max-width:420px;margin:40px auto}
+#login h2{margin-top:0}
+nav.tabs{display:flex;gap:6px;margin-top:18px;flex-wrap:wrap}
+nav.tabs button{border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:999px;cursor:pointer;font-weight:600;color:var(--muted)}
+nav.tabs button.on{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.cat{border:2px solid var(--line);border-radius:var(--radius);padding:14px;cursor:pointer;background:var(--surface-2);text-align:left}
+.cat strong{display:block;font-size:1.05rem}
+.cat span{font-size:.85rem;color:var(--muted)}
+.cat.on{border-color:var(--brand);background:var(--brand-soft)}
+.def{background:var(--surface-2);border-left:4px solid var(--brand);padding:10px 14px;border-radius:6px;font-size:.93rem;margin:14px 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+@media (max-width:640px){.grid2{grid-template-columns:1fr}}
+.sec{margin-top:22px}
+.sec h3{font-size:1rem;margin:0 0 4px}
+.sec .inst{font-size:.85rem;color:var(--muted);margin:0 0 8px}
+.crit{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;padding:12px 0;border-top:1px solid var(--line)}
+.crit .txt{flex:1;font-size:.94rem}
+.crit ul{margin:6px 0 0;padding-left:20px}
+.crit li{margin:3px 0}
+.crit.miss .txt{color:var(--bad)}
+.yn{display:flex;gap:6px;flex-shrink:0}
+.yn button{width:58px;padding:8px 0;border-radius:8px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:700}
+.yn button.si.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.yn button.no.on{background:var(--bad);border-color:var(--bad);color:#fff}
+.lugares{display:flex;gap:8px;flex-wrap:wrap}
+.lugares label{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:8px;padding:8px 12px;cursor:pointer;background:var(--surface)}
+.lugares input{accent-color:var(--brand)}
+.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap}
+.count{font-size:.9rem;color:var(--muted)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.filters select,.filters input{width:auto;min-width:160px;flex:1}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.8rem;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
+td.acts{white-space:nowrap}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78rem;font-weight:700;background:var(--brand-soft);color:var(--brand)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.empty{color:var(--muted);text-align:center;padding:30px 0}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#222;color:#fff;padding:10px 18px;border-radius:8px;font-size:.92rem;z-index:50;max-width:calc(100% - 32px)}
+footer{color:var(--muted);font-size:.8rem;text-align:center;padding:30px 0}
+#print{display:none}
+@media print{
+  body{background:#fff}
+  #app,header.top,footer,.toast{display:none!important}
+  #print{display:block;font:12pt/1.4 Arial,sans-serif;color:#000}
+  #print h2{font-size:14pt;margin:0 0 6px}
+  #print table{border:1px solid #000;margin:8px 0;font-size:10.5pt}
+  #print th,#print td{border:1px solid #000;padding:5px 6px;color:#000}
+  #print td.c{text-align:center;width:44px;font-size:13pt}
+  #print .firma{margin-top:40px;display:flex;justify-content:space-between;gap:30px}
+  #print .firma div{flex:1;border-top:1px solid #000;text-align:center;padding-top:4px;font-size:10pt}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div><h1 id="t-titulo">Certamen Literario</h1><p id="t-sub"></p></div>
+    <div class="who hidden" id="who"><span id="who-name"></span><button class="btn small ghost" id="btn-salir">Salir</button></div>
+  </div>
+</header>
+
+<div id="app" class="wrap">
+  <div id="demo" class="banner hidden">Modo de prueba: no hay servidor configurado. Los datos se guardan solo en este navegador y cualquier contraseña es aceptada.</div>
+
+  <!-- LOGIN -->
+  <section id="login" class="card">
+    <h2>Ingreso</h2>
+    <form id="f-login">
+      <label class="f" for="l-user">Usuario</label>
+      <select id="l-user" required>
+        <option value="ashly">Ashly Rodríguez</option>
+        <option value="kathya">Kathya Ugalde</option>
+        <option value="admin">Administrador</option>
+      </select>
+      <label class="f" for="l-pass">Contraseña</label>
+      <input type="password" id="l-pass" autocomplete="current-password" required>
+      <div class="err" id="l-err"></div>
+      <div class="actions"><button class="btn primary" id="l-btn" type="submit">Ingresar</button></div>
+    </form>
+  </section>
+
+  <!-- PRINCIPAL -->
+  <section id="main" class="hidden">
+    <nav class="tabs" id="tabs">
+      <button data-v="nueva" class="on">Nueva evaluación</button>
+      <button data-v="lista" id="tab-lista">Mis evaluaciones</button>
+      <button data-v="resumen" id="tab-resumen" class="hidden">Resumen por obra</button>
+    </nav>
+
+    <!-- FORMULARIO -->
+    <div id="v-nueva" class="card">
+      <div id="edit-note" class="banner hidden"></div>
+      <label class="f">Categoría</label>
+      <div class="cats" id="cats"></div>
+      <div id="form-body" class="hidden">
+        <div class="def" id="def"></div>
+        <div class="grid2">
+          <div><label class="f" for="e-obra" id="lbl-obra">Nombre de la obra *</label><input type="text" id="e-obra" maxlength="200"></div>
+          <div><label class="f" for="e-part">Participante o código (opcional)</label><input type="text" id="e-part" maxlength="200"></div>
+        </div>
+        <div id="secs"></div>
+        <div class="sec">
+          <h3>Propongo esta obra artística para que sea considerada en:</h3>
+          <div class="lugares" id="lugares">
+            <label><input type="radio" name="lugar" value="1"> Primer lugar</label>
+            <label><input type="radio" name="lugar" value="2"> Segundo lugar</label>
+            <label><input type="radio" name="lugar" value="3"> Tercer lugar</label>
+            <label><input type="radio" name="lugar" value=""> Sin propuesta</label>
+          </div>
+        </div>
+        <label class="f" for="e-obs">Observaciones (opcional)</label>
+        <textarea id="e-obs" maxlength="2000"></textarea>
+        <div class="err" id="e-err"></div>
+        <div class="actions">
+          <span class="count" id="e-count"></span>
+          <button class="btn" id="btn-cancelar" type="button">Limpiar</button>
+          <button class="btn primary" id="btn-guardar" type="button">Guardar evaluación</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LISTA -->
+    <div id="v-lista" class="card hidden">
+      <div class="filters">
+        <select id="fl-cat"><option value="">Todas las categorías</option></select>
+        <select id="fl-eval" class="hidden"><option value="">Todas las evaluadoras</option></select>
+        <input type="text" id="fl-q" placeholder="Buscar obra o participante">
+        <button class="btn" id="btn-refrescar" type="button">Actualizar</button>
+        <button class="btn" id="btn-csv" type="button">Exportar CSV</button>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr>
+        <th>Fecha</th><th>Categoría</th><th>Obra</th><th id="th-eval" class="hidden">Evaluadora</th><th>Cumple</th><th>Lugar</th><th></th>
+      </tr></thead><tbody id="tb-lista"></tbody></table></div>
+    </div>
+
+    <!-- RESUMEN -->
+    <div id="v-resumen" class="card hidden">
+      <p class="count">Lugar propuesto por cada evaluadora para cada obra (agrupado por categoría y nombre de la obra).</p>
+      <div id="resumen"></div>
+    </div>
+  </section>
+</div>
+
+<div id="print"></div>
+<footer>Certamen Literario · Rúbricas de evaluación</footer>
+
+<script src="config.js"></script>
+<script>
+"use strict";
+/* ---------- Rúbricas (tomadas del documento oficial) ---------- */
+const FORMATIVO_1 = "Promueve el reconocimiento y la valoración de la diversidad cultural, resaltando la riqueza de las diferentes culturas, tradiciones y costumbres que conforman nuestra sociedad. Fomenta la identidad cultural, el sentido de pertenencia, el respeto, la igualdad, la equidad y la convivencia pacífica, fortaleciendo una cultura de paz basada en el diálogo, la inclusión y la valoración de nuestras raíces culturales.";
+const DIGNIDAD = "La obra respeta en su totalidad la dignidad y diversidad humana, los derechos humanos y la equidad de género.";
+const REFLEXION = "El contenido general y mensaje de la obra artística incorpora una reflexión crítica y analítica de la realidad actual.";
+const INDIVIDUAL = "La participación es estrictamente individual.";
+
+const RUBRICAS = {
+  cuento: {
+    nombre: "Cuento", obra: "Nombre del cuento",
+    def: "Narración literaria breve que presenta una historia, real o imaginaria, desarrollada a través de personajes, acontecimientos y un espacio y tiempo determinados. Generalmente posee una estructura con inicio, desarrollo y desenlace, y busca provocar en el lector una emoción, reflexión o experiencia significativa.",
+    secciones: [
+      { titulo: "Aspectos formativos de la propuesta artística", inst: "Marque Sí si cumple. Marque No si no cumple.",
+        items: [FORMATIVO_1, REFLEXION, "El cuento es original.", INDIVIDUAL,
+          "El cuento debe tener una extensión de dos a ocho páginas, en tamaño carta. Si se presenta manuscrito, deberá estar escrito con letra clara y legible. En caso de presentarse de forma impresa, se recomienda utilizar fuente Arial, tamaño 12, interlineado doble y sangría."] },
+      { titulo: "Cuida aspectos técnico-artísticos generales como:", inst: "Una sola marca para todo el bloque: Sí si cumple, No si no cumple.", bloque: true,
+        items: ["Presenta correspondencia con las características del género cuento.", "Creatividad en la construcción narrativa.", "Desarrollo del tema.", "Presentación de espacios.", "Efectividad del narrador.", "Aspectos de puntuación y ortografía."] }
+    ]
+  },
+  poesia: {
+    nombre: "Poesía", obra: "Nombre del poema",
+    def: "Expresión artística que utiliza las palabras de manera creativa para comunicar emociones, pensamientos, experiencias, imágenes o sentimientos. Puede emplear recursos literarios como la metáfora, la comparación, la personificación y la repetición. Puede escribirse con o sin rima y con diferentes estructuras y extensiones.",
+    secciones: [
+      { titulo: "Aspectos formativos de la propuesta artística", inst: "Marque Sí si cumple. Marque No si no cumple.", items: [FORMATIVO_1, DIGNIDAD, REFLEXION] },
+      { titulo: "Respeta lo estipulado en el Manual de disciplinas artísticas en cuanto a:", inst: "Marque Sí si cumple. Marque No si no cumple.",
+        items: ["La poesía es original.", INDIVIDUAL, "La extensión del poema es libre y debe presentarse en forma escrita. Si se presenta de manera impresa, deberá hacerse, preferiblemente, con letra 12, Arial. Si el texto es presentado a mano utiliza letra legible."] },
+      { titulo: "Cuida aspectos técnico-artísticos generales como:", inst: "Un solo V.° B.°: Sí si cumple, No si no cumple.", bloque: true,
+        items: ["<b>Empleo del lenguaje poético:</b> uso de figuras de sentido y de construcción.",
+          "<b>Presentación y desarrollo del motivo lírico:</b> rasgo repetitivo en la obra que le brinda cohesión.",
+          "<b>Expresión del hablante o el yo lírico:</b> manifestación explícita o implícita del yo lírico.",
+          "<b>Fuerza lírica del poema:</b> evocación vehemente de imágenes.",
+          "<b>Emotividad del sentido lírico:</b> comunicación de sentimientos por parte del yo lírico.",
+          "<b>Calidad eufónica del texto:</b> sonoridad lírica agradable y acertada de acuerdo con el motivo lírico.",
+          "<b>Capacidad de síntesis expresiva:</b> expresión breve de un motivo lírico articulado y cohesionado.",
+          "<b>Empleo de las normas básicas de la ortografía en español:</b> forma correcta de la escritura de la lengua.",
+          "<b>Carece de rima:</b> las tendencias de la poesía en la actualidad no recurren al recurso de la rima."] }
+    ]
+  },
+  microrrelato: {
+    nombre: "Microrrelato", obra: "Nombre del microrrelato",
+    def: "Narración literaria muy breve que, mediante pocas palabras, desarrolla una situación, idea o historia. Se caracteriza por la concisión, la precisión del lenguaje y la capacidad de sugerir más de lo que expresa directamente. Puede presentar un final sorpresivo, abierto o que invite a la reflexión.",
+    secciones: [
+      { titulo: "Aspectos formativos de la propuesta artística", inst: "Marque Sí si cumple. Marque No si no cumple.", items: [FORMATIVO_1, DIGNIDAD, REFLEXION] },
+      { titulo: "Respeta lo estipulado en el Manual de disciplinas artísticas en cuanto a:", inst: "Marque Sí si cumple. Marque No si no cumple.",
+        items: ["El microrrelato es original.", INDIVIDUAL, "Respeta la extensión mínima de siete palabras y máxima de doscientas palabras.",
+          "Si el texto es presentado a mano utiliza letra legible. Si se realiza de manera impresa, deberá hacerse, preferiblemente, con letra 12, Arial, a espacio doble, con sangría."] },
+      { titulo: "Cuida aspectos técnico-artísticos generales como:", inst: "Una sola marca para todo el bloque: Sí si cumple, No si no cumple.", bloque: true,
+        items: ["<b>Rasgos discursivos:</b> narratividad. Posee ironía, parodia, humor, etc.",
+          "<b>Rasgos formales:</b> emplea una estructura simple, personajes mínimamente caracterizados, espacios esquemáticos y condensación temporal.",
+          "<b>Rasgos temáticos:</b> buen empleo de la intertextualidad, la metaficción, entre otros.",
+          "<b>Puntuación y ortografía:</b> emplea correctamente las normas idiomáticas.",
+          "<b>Presenta las siguientes condiciones y características:</b> es corto.",
+          "<b>Concisión, síntesis y condensación:</b> constituye una obra literaria corta."] }
+    ]
+  }
+};
+const LUGAR_TXT = { "1": "Primer lugar", "2": "Segundo lugar", "3": "Tercer lugar", "": "Sin propuesta" };
+
+// Lista de criterios con clave estable: "s0-i2" o "s1-b" (bloque)
+function criterios(cat) {
+  const out = [];
+  RUBRICAS[cat].secciones.forEach((s, si) => {
+    if (s.bloque) out.push({ k: `s${si}-b`, sec: si });
+    else s.items.forEach((_, ii) => out.push({ k: `s${si}-i${ii}`, sec: si, item: ii }));
+  });
+  return out;
+}
+
+/* ---------- Utilidades ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fecha = iso => { const d = new Date(iso); return isNaN(d) ? esc(iso) : d.toLocaleString("es-CR", { dateStyle: "short", timeStyle: "short" }); };
+function toast(msg) { const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); }
+function ss(k, v) { try { if (v === undefined) return sessionStorage.getItem(k); if (v === null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); } catch (e) { return null; } }
+
+/* ---------- API (Apps Script o modo de prueba) ---------- */
+const API = (window.CONFIG && window.CONFIG.API_URL || "").trim();
+const DEMO = !API;
+const DEMO_USERS = { ashly: ["Ashly Rodríguez", "profesora"], kathya: ["Kathya Ugalde", "profesora"], admin: ["Administrador", "admin"] };
+let SES = null; // {usuario, clave, nombre, rol}
+let DATOS = [];
+
+async function api(accion, extra = {}) {
+  const body = Object.assign({ accion, usuario: SES ? SES.usuario : extra.usuario, clave: SES ? SES.clave : extra.clave }, extra);
+  if (DEMO) return demoApi(body);
+  const r = await fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) });
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.error || "Error del servidor");
+  return j;
+}
+function demoLoad() { try { return JSON.parse(localStorage.getItem("cl_demo") || "[]"); } catch (e) { return []; } }
+function demoSave(a) { try { localStorage.setItem("cl_demo", JSON.stringify(a)); } catch (e) {} }
+async function demoApi(b) {
+  const u = DEMO_USERS[b.usuario]; if (!u) throw new Error("Usuario no válido");
+  const admin = u[1] === "admin"; let a = demoLoad();
+  if (b.accion === "login") return { ok: true, usuario: { id: b.usuario, nombre: u[0], rol: u[1] } };
+  if (b.accion === "listar") return { ok: true, datos: admin ? a : a.filter(x => x.usuario === b.usuario) };
+  if (b.accion === "guardar") {
+    const now = new Date().toISOString(); const d = b.datos; const i = a.findIndex(x => x.id === d.id);
+    if (i >= 0) a[i] = Object.assign(a[i], d, { actualizado: now });
+    else a.push(Object.assign({}, d, { id: String(Date.now()), fecha: now, actualizado: now, usuario: b.usuario, evaluador: u[0] }));
+    demoSave(a); return { ok: true };
+  }
+  if (b.accion === "eliminar") { demoSave(a.filter(x => x.id !== b.id)); return { ok: true }; }
+}
+
+/* ---------- Login ---------- */
+$("#t-titulo").textContent = (window.CONFIG && CONFIG.TITULO) || "Certamen Literario";
+$("#t-sub").textContent = (window.CONFIG && CONFIG.SUBTITULO) || "";
+if (DEMO) $("#demo").classList.remove("hidden");
+
+$("#f-login").addEventListener("submit", async e => {
+  e.preventDefault();
+  const usuario = $("#l-user").value, clave = $("#l-pass").value;
+  $("#l-err").textContent = ""; $("#l-btn").disabled = true;
+  try {
+    const r = await api("login", { usuario, clave });
+    SES = { usuario, clave, nombre: r.usuario.nombre, rol: r.usuario.rol };
+    ss("cl_ses", JSON.stringify(SES));
+    entrar();
+  } catch (err) { $("#l-err").textContent = err.message === "Failed to fetch" ? "No se pudo conectar con el servidor." : err.message; }
+  finally { $("#l-btn").disabled = false; }
+});
+$("#btn-salir").addEventListener("click", () => { SES = null; ss("cl_ses", null); location.reload(); });
+
+function entrar() {
+  $("#login").classList.add("hidden"); $("#main").classList.remove("hidden");
+  $("#who").classList.remove("hidden"); $("#who-name").textContent = SES.nombre;
+  const admin = SES.rol === "admin";
+  $("#tab-lista").textContent = admin ? "Todas las evaluaciones" : "Mis evaluaciones";
+  $("#tab-resumen").classList.toggle("hidden", !admin);
+  $("#fl-eval").classList.toggle("hidden", !admin);
+  $("#th-eval").classList.toggle("hidden", !admin);
+  if (admin) vista("lista");
+  cargar();
+}
+
+/* ---------- Navegación ---------- */
+$$("#tabs button").forEach(b => b.addEventListener("click", () => vista(b.dataset.v)));
+function vista(v) {
+  $$("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.v === v));
+  ["nueva", "lista", "resumen"].forEach(x => $("#v-" + x).classList.toggle("hidden", x !== v));
+  if (v === "resumen") pintarResumen();
+}
+
+/* ---------- Formulario ---------- */
+let CAT = null, EDIT_ID = null, RESP = {};
+$("#cats").innerHTML = Object.entries(RUBRICAS).map(([k, r]) =>
+  `<button type="button" class="cat" data-c="${k}"><strong>${r.nombre}</strong><span>${criterios(k).length} criterios</span></button>`).join("");
+$$("#cats .cat").forEach(b => b.addEventListener("click", () => {
+  if (CAT && CAT !== b.dataset.c && Object.keys(RESP).length && !confirm("Cambiar de categoría borra las marcas actuales. ¿Continuar?")) return;
+  elegirCat(b.dataset.c, CAT !== b.dataset.c);
+}));
+Object.keys(RUBRICAS).forEach(k => $("#fl-cat").insertAdjacentHTML("beforeend", `<option value="${k}">${RUBRICAS[k].nombre}</option>`));
+
+function elegirCat(cat, reset = true) {
+  CAT = cat; if (reset) RESP = {};
+  $$("#cats .cat").forEach(b => b.classList.toggle("on", b.dataset.c === cat));
+  const r = RUBRICAS[cat];
+  $("#form-body").classList.remove("hidden");
+  $("#def").innerHTML = `<b>Definición de ${r.nombre.toLowerCase()}:</b> ${r.def} <i>(La obra debe ser original.)</i>`;
+  $("#lbl-obra").textContent = r.obra + " *";
+  $("#secs").innerHTML = r.secciones.map((s, si) => `<div class="sec"><h3>${s.titulo}</h3><p class="inst">${s.inst}</p>${
+    s.bloque ? fila(`s${si}-b`, `<ul>${s.items.map(i => `<li>${i}</li>`).join("")}</ul>`)
+             : s.items.map((t, ii) => fila(`s${si}-i${ii}`, t)).join("")}</div>`).join("");
+  $$("#secs .yn button").forEach(b => b.addEventListener("click", () => {
+    RESP[b.dataset.k] = b.dataset.v; pintarMarcas();
+  }));
+  pintarMarcas(); $("#e-err").textContent = "";
+}
+function fila(k, html) {
+  return `<div class="crit" data-k="${k}"><div class="txt">${html}</div><div class="yn">
+    <button type="button" class="si" data-k="${k}" data-v="si" aria-label="Sí cumple">✓ Sí</button>
+    <button type="button" class="no" data-k="${k}" data-v="no" aria-label="No cumple">✘ No</button></div></div>`;
+}
+function pintarMarcas() {
+  $$("#secs .yn button").forEach(b => b.classList.toggle("on", RESP[b.dataset.k] === b.dataset.v));
+  $$("#secs .crit").forEach(c => { if (RESP[c.dataset.k]) c.classList.remove("miss"); });
+  const tot = criterios(CAT).length, hechos = criterios(CAT).filter(c => RESP[c.k]).length;
+  const si = Object.values(RESP).filter(v => v === "si").length;
+  $("#e-count").textContent = `${hechos} de ${tot} marcados · ${si} cumplen`;
+}
+function limpiarForm() {
+  CAT = null; EDIT_ID = null; RESP = {};
+  $$("#cats .cat").forEach(b => b.classList.remove("on"));
+  $("#form-body").classList.add("hidden"); $("#edit-note").classList.add("hidden");
+  $("#e-obra").value = ""; $("#e-part").value = ""; $("#e-obs").value = "";
+  $$("input[name=lugar]").forEach(r => r.checked = false);
+  $("#btn-guardar").textContent = "Guardar evaluación";
+}
+$("#btn-cancelar").addEventListener("click", () => { if (confirm("¿Limpiar el formulario?")) limpiarForm(); });
+
+$("#btn-guardar").addEventListener("click", async () => {
+  const err = $("#e-err"); err.textContent = "";
+  const obra = $("#e-obra").value.trim();
+  if (!obra) { err.textContent = "Escriba el nombre de la obra."; $("#e-obra").focus(); return; }
+  const faltan = criterios(CAT).filter(c => !RESP[c.k]);
+  if (faltan.length) {
+    faltan.forEach(c => $(`#secs .crit[data-k="${c.k}"]`).classList.add("miss"));
+    err.textContent = `Faltan ${faltan.length} criterio(s) por marcar (resaltados en rojo).`;
+    $(`#secs .crit[data-k="${faltan[0].k}"]`).scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
+  const lug = $("input[name=lugar]:checked");
+  const datos = {
+    id: EDIT_ID || undefined, categoria: CAT, obra, participante: $("#e-part").value.trim(),
+    respuestas: RESP, si: Object.values(RESP).filter(v => v === "si").length,
+    no: Object.values(RESP).filter(v => v === "no").length, lugar: lug ? lug.value : "", observaciones: $("#e-obs").value.trim()
+  };
+  const btn = $("#btn-guardar"); btn.disabled = true; btn.textContent = "Guardando...";
+  try {
+    await api("guardar", { datos });
+    toast(EDIT_ID ? "Evaluación actualizada." : "Evaluación guardada.");
+    limpiarForm(); await cargar(); vista("lista");
+  } catch (e) { err.textContent = "No se pudo guardar: " + e.message; }
+  finally { btn.disabled = false; btn.textContent = EDIT_ID ? "Guardar cambios" : "Guardar evaluación"; }
+});
+
+function editar(id) {
+  const d = DATOS.find(x => x.id === id); if (!d) return;
+  limpiarForm(); EDIT_ID = id; RESP = Object.assign({}, d.respuestas);
+  elegirCat(d.categoria, false);
+  $("#e-obra").value = d.obra; $("#e-part").value = d.participante || ""; $("#e-obs").value = d.observaciones || "";
+  $$("input[name=lugar]").forEach(r => r.checked = r.value === String(d.lugar || ""));
+  $("#edit-note").textContent = `Editando la evaluación de "${d.obra}" (${d.evaluador}). Al guardar se reemplazan los datos anteriores.`;
+  $("#edit-note").classList.remove("hidden");
+  $("#btn-guardar").textContent = "Guardar cambios";
+  vista("nueva"); window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+/* ---------- Lista ---------- */
+async function cargar() {
+  $("#tb-lista").innerHTML = `<tr><td colspan="7" class="empty">Cargando...</td></tr>`;
+  try {
+    const r = await api("listar");
+    DATOS = (r.datos || []).map(d => Object.assign(d, { respuestas: typeof d.respuestas === "string" ? JSON.parse(d.respuestas || "{}") : (d.respuestas || {}) }))
+      .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
+    const evs = [...new Set(DATOS.map(d => d.evaluador))].sort();
+    const sel = $("#fl-eval"), cur = sel.value;
+    sel.innerHTML = `<option value="">Todas las evaluadoras</option>` + evs.map(e => `<option>${esc(e)}</option>`).join("");
+    sel.value = evs.includes(cur) ? cur : "";
+    pintarLista();
+    if (!$("#v-resumen").classList.contains("hidden")) pintarResumen();
+  } catch (e) {
+    if (/contraseña/i.test(e.message)) { ss("cl_ses", null); location.reload(); return; }
+    $("#tb-lista").innerHTML = `<tr><td colspan="7" class="empty">No se pudieron cargar los datos: ${esc(e.message)}</td></tr>`;
+  }
+}
+function filtrados() {
+  const c = $("#fl-cat").value, ev = $("#fl-eval").value, q = $("#fl-q").value.trim().toLowerCase();
+  return DATOS.filter(d => (!c || d.categoria === c) && (!ev || d.evaluador === ev) &&
+    (!q || (d.obra + " " + (d.participante || "")).toLowerCase().includes(q)));
+}
+function pintarLista() {
+  const admin = SES.rol === "admin", rows = filtrados();
+  $("#tb-lista").innerHTML = rows.length ? rows.map(d => {
+    const tot = criterios(d.categoria).length;
+    return `<tr><td>${fecha(d.fecha)}</td><td>${esc(RUBRICAS[d.categoria]?.nombre || d.categoria)}</td>
+      <td><b>${esc(d.obra)}</b>${d.participante ? `<br><span class="count">${esc(d.participante)}</span>` : ""}</td>
+      ${admin ? `<td>${esc(d.evaluador)}</td>` : ""}
+      <td><span class="pill ${d.no ? "bad" : "ok"}">${d.si}/${tot}</span></td>
+      <td>${d.lugar ? `<span class="pill">${LUGAR_TXT[d.lugar]}</span>` : `<span class="count">—</span>`}</td>
+      <td class="acts"><button class="btn small" data-a="ed" data-id="${esc(d.id)}">Editar</button>
+        <button class="btn small" data-a="pr" data-id="${esc(d.id)}">Imprimir</button>
+        <button class="btn small danger" data-a="del" data-id="${esc(d.id)}">Eliminar</button></td></tr>`;
+  }).join("") : `<tr><td colspan="7" class="empty">No hay evaluaciones${DATOS.length ? " con esos filtros" : " todavía"}.</td></tr>`;
+}
+$("#tb-lista").addEventListener("click", async e => {
+  const b = e.target.closest("button[data-a]"); if (!b) return;
+  const id = b.dataset.id, d = DATOS.find(x => x.id === id);
+  if (b.dataset.a === "ed") editar(id);
+  if (b.dataset.a === "pr") imprimir(d);
+  if (b.dataset.a === "del") {
+    if (!confirm(`¿Eliminar la evaluación de "${d.obra}"? Esta acción no se puede deshacer.`)) return;
+    b.disabled = true;
+    try { await api("eliminar", { id }); toast("Evaluación eliminada."); await cargar(); }
+    catch (err) { toast("No se pudo eliminar: " + err.message); b.disabled = false; }
+  }
+});
+["#fl-cat", "#fl-eval"].forEach(s => $(s).addEventListener("change", pintarLista));
+$("#fl-q").addEventListener("input", pintarLista);
+$("#btn-refrescar").addEventListener("click", cargar);
+
+$("#btn-csv").addEventListener("click", () => {
+  const rows = filtrados(); if (!rows.length) { toast("No hay datos para exportar."); return; }
+  const head = ["Fecha", "Evaluadora", "Categoría", "Obra", "Participante", "Cumple", "No cumple", "Lugar propuesto", "Observaciones"];
+  const q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const csv = [head, ...rows.map(d => [fecha(d.fecha), d.evaluador, RUBRICAS[d.categoria]?.nombre, d.obra, d.participante, d.si, d.no, LUGAR_TXT[d.lugar || ""], d.observaciones])]
+    .map(r => r.map(q).join(",")).join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
+  a.download = "evaluaciones-certamen.csv"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+
+/* ---------- Resumen (Administrador) ---------- */
+function pintarResumen() {
+  const evs = [...new Set(["Ashly Rodríguez", "Kathya Ugalde", ...DATOS.map(d => d.evaluador)])];
+  const norm = s => String(s).trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ");
+  let html = "";
+  Object.keys(RUBRICAS).forEach(cat => {
+    const g = {};
+    DATOS.filter(d => d.categoria === cat).forEach(d => {
+      const k = norm(d.obra); (g[k] = g[k] || { obra: d.obra, ev: {} }).ev[d.evaluador] = d;
+    });
+    const obras = Object.values(g); if (!obras.length) return;
+    const pts = o => Object.values(o.ev).reduce((s, d) => s + ({ "1": 3, "2": 2, "3": 1 }[d.lugar] || 0), 0);
+    obras.sort((a, b) => pts(b) - pts(a) || a.obra.localeCompare(b.obra));
+    const tot = criterios(cat).length;
+    html += `<h3>${RUBRICAS[cat].nombre}</h3><div class="tbl-wrap"><table><thead><tr><th>Obra</th>${evs.map(e => `<th>${esc(e)}</th>`).join("")}<th>Puntos</th></tr></thead><tbody>${
+      obras.map(o => `<tr><td><b>${esc(o.obra)}</b></td>${evs.map(e => { const d = o.ev[e];
+        return `<td>${d ? `${d.lugar ? `<span class="pill">${LUGAR_TXT[d.lugar]}</span>` : `<span class="count">Sin propuesta</span>`}<br><span class="count">Cumple ${d.si}/${tot}</span>` : `<span class="count">Pendiente</span>`}</td>`; }).join("")}<td><b>${pts(o)}</b></td></tr>`).join("")
+    }</tbody></table></div>`;
+  });
+  $("#resumen").innerHTML = (html || `<p class="empty">Aún no hay evaluaciones.</p>`) +
+    (html ? `<p class="count">Puntos de referencia: Primer lugar = 3, Segundo = 2, Tercer = 1. La decisión final corresponde al jurado.</p>` : "");
+}
+
+/* ---------- Impresión ---------- */
+function imprimir(d) {
+  const r = RUBRICAS[d.categoria], R = d.respuestas || {};
+  const m = k => [R[k] === "si" ? "✓" : "", R[k] === "no" ? "✘" : ""];
+  let h = `<h2>${r.nombre.toUpperCase()} (la obra debe ser original)</h2>
+    <p><b>Definición de ${r.nombre.toLowerCase()}:</b> ${r.def}</p>
+    <p><b>${r.obra}:</b> ${esc(d.obra)}${d.participante ? ` &nbsp; <b>Participante:</b> ${esc(d.participante)}` : ""}</p>`;
+  r.secciones.forEach((s, si) => {
+    h += `<table><tr><th>${s.titulo} (${s.inst})</th><th>SÍ ✓</th><th>NO ✘</th></tr>`;
+    if (s.bloque) { const [a, b] = m(`s${si}-b`); h += `<tr><td><ul style="margin:0;padding-left:18px">${s.items.map(i => `<li>${i}</li>`).join("")}</ul></td><td class="c">${a}</td><td class="c">${b}</td></tr>`; }
+    else s.items.forEach((t, ii) => { const [a, b] = m(`s${si}-i${ii}`); h += `<tr><td>${t}</td><td class="c">${a}</td><td class="c">${b}</td></tr>`; });
+    h += `</table>`;
+  });
+  const x = v => d.lugar === v ? "X" : "&nbsp;&nbsp;";
+  h += `<p><b>Propongo esta obra artística para que sea considerada en:</b> Primer lugar ( ${x("1")} ) &nbsp; Segundo lugar ( ${x("2")} ) &nbsp; Tercer lugar ( ${x("3")} )</p>`;
+  if (d.observaciones) h += `<p><b>Observaciones:</b> ${esc(d.observaciones)}</p>`;
+  h += `<div class="firma"><div>${esc(d.evaluador)}<br>Nombre y firma de la persona evaluadora</div><div>${fecha(d.fecha)}<br>Fecha</div></div>`;
+  $("#print").innerHTML = h; window.print();
+}
+
+/* ---------- Inicio ---------- */
+try { const s = JSON.parse(ss("cl_ses") || "null"); if (s && s.usuario) { SES = s; entrar(); } } catch (e) {}
+</script>
+</body>
+</html>
