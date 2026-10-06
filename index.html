@@ -24,6 +24,7 @@ header.top h1{font-size:1.15rem;margin:0}
 header.top p{margin:0;font-size:.85rem;opacity:.85}
 .who{display:flex;align-items:center;gap:10px;font-size:.9rem}
 .btn{border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:600}
+a.btn{text-decoration:none;color:inherit;display:inline-block}
 .btn:hover{background:var(--surface-2)}
 .btn.primary{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
 .btn.primary:hover{filter:brightness(1.1)}
@@ -81,6 +82,21 @@ td.acts{white-space:nowrap}
 .empty{color:var(--muted);text-align:center;padding:30px 0}
 .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#222;color:#fff;padding:10px 18px;border-radius:8px;font-size:.92rem;z-index:50;max-width:calc(100% - 32px)}
 footer{color:var(--muted);font-size:.8rem;text-align:center;padding:30px 0}
+.files{border:1px dashed var(--line);border-radius:8px;padding:12px;background:var(--surface-2)}
+.files input[type=file]{font-size:.9rem;max-width:100%}
+.flist{list-style:none;margin:10px 0 0;padding:0}
+.flist li{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid var(--line);font-size:.9rem}
+.flist li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.flist li div{display:flex;gap:6px;flex-shrink:0}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:40;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal .box{background:var(--surface);border-radius:var(--radius);width:100%;max-width:1000px;height:90vh;display:flex;flex-direction:column;overflow:hidden}
+.modal .bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.modal .bar b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.modal .bar div{display:flex;gap:6px;flex-wrap:wrap}
+.modal .view{flex:1;overflow:auto;background:#525659;display:flex;align-items:flex-start;justify-content:center}
+.modal .view iframe{width:100%;height:100%;border:0;background:#fff}
+.modal .view img{max-width:100%;height:auto;display:block}
+.modal .view p{color:#fff;padding:30px;text-align:center}
 #print{display:none}
 @media print{
   body{background:#fff}
@@ -142,6 +158,11 @@ footer{color:var(--muted);font-size:.8rem;text-align:center;padding:30px 0}
           <div><label class="f" for="e-obra" id="lbl-obra">Nombre de la obra *</label><input type="text" id="e-obra" maxlength="200"></div>
           <div><label class="f" for="e-part">Participante o código (opcional)</label><input type="text" id="e-part" maxlength="200"></div>
         </div>
+        <label class="f" for="e-file">Archivo de la obra (opcional: PDF, JPG o PNG, hasta 5 archivos)</label>
+        <div class="files">
+          <input type="file" id="e-file" accept="application/pdf,image/jpeg,image/png" multiple>
+          <ul class="flist" id="e-flist"></ul>
+        </div>
         <div id="secs"></div>
         <div class="sec">
           <h3>Propongo esta obra artística para que sea considerada en:</h3>
@@ -185,6 +206,15 @@ footer{color:var(--muted);font-size:.8rem;text-align:center;padding:30px 0}
   </section>
 </div>
 
+<div id="visor" class="modal hidden" role="dialog" aria-modal="true">
+  <div class="box">
+    <div class="bar"><b id="v-nombre"></b><select id="v-sel" class="hidden" style="width:auto;padding:4px 8px"></select><div>
+      <a class="btn small" id="v-abrir" target="_blank" rel="noopener">Abrir en pestaña nueva</a>
+      <a class="btn small" id="v-bajar">Descargar</a>
+      <button class="btn small" id="v-cerrar" type="button">Cerrar</button></div></div>
+    <div class="view" id="v-view"></div>
+  </div>
+</div>
 <div id="print"></div>
 <footer>Certamen Literario · Rúbricas de evaluación</footer>
 
@@ -277,7 +307,8 @@ async function api(accion, extra = {}) {
   const body = Object.assign({ accion, usuario: SES ? SES.usuario : extra.usuario, clave: SES ? SES.clave : extra.clave }, extra);
   if (DEMO) return demoApi(body);
   const r = await fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) });
-  const j = await r.json();
+  let j;
+  try { j = await r.json(); } catch (e) { throw new Error("El servidor no respondió correctamente. Espere unos segundos e intente de nuevo."); }
   if (!j.ok) throw new Error(j.error || "Error del servidor");
   return j;
 }
@@ -289,10 +320,16 @@ async function demoApi(b) {
   if (b.accion === "login") return { ok: true, usuario: { id: b.usuario, nombre: u[0], rol: u[1] } };
   if (b.accion === "listar") return { ok: true, datos: admin ? a : a.filter(x => x.usuario === b.usuario) };
   if (b.accion === "guardar") {
-    const now = new Date().toISOString(); const d = b.datos; const i = a.findIndex(x => x.id === d.id);
+    const now = new Date().toISOString(); const d = Object.assign({}, b.datos); const i = a.findIndex(x => x.id === d.id);
+    d.archivos = (d.archivos || []).concat((d.nuevosArchivos || []).map((n, j) => ({ id: "f" + Date.now() + j, nombre: n.nombre, tipo: n.tipo, tam: n.tam, b64: n.b64 })));
+    delete d.nuevosArchivos;
     if (i >= 0) a[i] = Object.assign(a[i], d, { actualizado: now });
     else a.push(Object.assign({}, d, { id: String(Date.now()), fecha: now, actualizado: now, usuario: b.usuario, evaluador: u[0] }));
     demoSave(a); return { ok: true };
+  }
+  if (b.accion === "verArchivo") {
+    for (const x of a) for (const f of (x.archivos || [])) if (f.id === b.id) return { ok: true, nombre: f.nombre, tipo: f.tipo, b64: f.b64 };
+    throw new Error("Archivo no encontrado");
   }
   if (b.accion === "eliminar") { demoSave(a.filter(x => x.id !== b.id)); return { ok: true }; }
 }
@@ -373,8 +410,85 @@ function pintarMarcas() {
   const si = Object.values(RESP).filter(v => v === "si").length;
   $("#e-count").textContent = `${hechos} de ${tot} marcados · ${si} cumplen`;
 }
+/* ---------- Archivos de la obra ---------- */
+let ARCH = [], NUEVOS = []; // ARCH: ya guardados {id,nombre,tipo,tam}; NUEVOS: {nombre,tipo,tam,b64}
+const MAX_ARCH = 5, MAX_MB = 15;
+const kb = n => n > 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB";
+const leerB64 = blob => new Promise((ok, mal) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.onerror = mal; r.readAsDataURL(blob); });
+// Las fotos se reducen (máx. 2200 px, JPEG) para que suban rápido; los PDF se envían tal cual.
+async function prepararImagen(file) {
+  if (file.size < 1.5 * 1048576) return file;
+  try {
+    const bmp = await createImageBitmap(file);
+    const s = Math.min(1, 2200 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement("canvas"); c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
+    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+    const blob = await new Promise(r => c.toBlob(r, "image/jpeg", 0.85));
+    return blob && blob.size < file.size ? new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" }) : file;
+  } catch (e) { return file; }
+}
+$("#e-file").addEventListener("change", async e => {
+  const err = $("#e-err"); err.textContent = "";
+  for (let f of [...e.target.files]) {
+    if (ARCH.length + NUEVOS.length >= MAX_ARCH) { err.textContent = `Máximo ${MAX_ARCH} archivos por evaluación.`; break; }
+    if (!["application/pdf", "image/jpeg", "image/png"].includes(f.type)) { err.textContent = `"${f.name}" no es PDF, JPG ni PNG.`; continue; }
+    if (f.type !== "application/pdf") f = await prepararImagen(f);
+    if (f.size > MAX_MB * 1048576) { err.textContent = `"${f.name}" pesa más de ${MAX_MB} MB.`; continue; }
+    NUEVOS.push({ nombre: f.name, tipo: f.type, tam: f.size, b64: await leerB64(f), blob: f });
+  }
+  e.target.value = ""; pintarArchivos();
+});
+function pintarArchivos() {
+  const li = (nombre, tam, acciones) => `<li><span title="${esc(nombre)}">${esc(nombre)} <span class="count">(${kb(tam)})</span></span><div>${acciones}</div></li>`;
+  $("#e-flist").innerHTML =
+    ARCH.map((a, i) => li(a.nombre, a.tam || 0, `<button type="button" class="btn small" data-fv="${i}">Ver</button><button type="button" class="btn small danger" data-fq="${i}">Quitar</button>`)).join("") +
+    NUEVOS.map((a, i) => li(a.nombre + " · nuevo", a.tam, `<button type="button" class="btn small" data-nv="${i}">Ver</button><button type="button" class="btn small danger" data-nq="${i}">Quitar</button>`)).join("");
+}
+$("#e-flist").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.fv) verArchivo(ARCH[+b.dataset.fv], ARCH);
+  if (b.dataset.fq && confirm("¿Quitar este archivo? Se eliminará al guardar la evaluación.")) { ARCH.splice(+b.dataset.fq, 1); pintarArchivos(); }
+  if (b.dataset.nv) { $("#v-sel").classList.add("hidden"); mostrar(NUEVOS[+b.dataset.nv].nombre, NUEVOS[+b.dataset.nv].blob); }
+  if (b.dataset.nq) { NUEVOS.splice(+b.dataset.nq, 1); pintarArchivos(); }
+});
+
+/* ---------- Visor ---------- */
+const CACHE = {};
+let VURL = null;
+let VLISTA = [];
+async function verArchivo(a, lista) {
+  VLISTA = lista || [a];
+  const sel = $("#v-sel");
+  sel.innerHTML = VLISTA.map((x, i) => `<option value="${i}">${i + 1}. ${esc(x.nombre)}</option>`).join("");
+  sel.value = String(VLISTA.indexOf(a)); sel.classList.toggle("hidden", VLISTA.length < 2);
+  mostrar(a.nombre, null);
+  try {
+    if (!CACHE[a.id]) {
+      const r = await api("verArchivo", { id: a.id });
+      const bin = atob(r.b64), u8 = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      CACHE[a.id] = new Blob([u8], { type: r.tipo || a.tipo });
+    }
+    if (!$("#visor").classList.contains("hidden")) mostrar(a.nombre, CACHE[a.id]);
+  } catch (e) { $("#v-view").innerHTML = `<p>No se pudo abrir el archivo: ${esc(e.message)}</p>`; }
+}
+function mostrar(nombre, blob) {
+  $("#visor").classList.remove("hidden"); $("#v-nombre").textContent = nombre;
+  if (VURL) { URL.revokeObjectURL(VURL); VURL = null; }
+  const ab = $("#v-abrir"), bj = $("#v-bajar");
+  if (!blob) { $("#v-view").innerHTML = `<p>Cargando archivo...</p>`; ab.classList.add("hidden"); bj.classList.add("hidden"); return; }
+  VURL = URL.createObjectURL(blob);
+  ab.href = VURL; bj.href = VURL; bj.download = nombre; ab.classList.remove("hidden"); bj.classList.remove("hidden");
+  $("#v-view").innerHTML = blob.type === "application/pdf" ? `<iframe src="${VURL}" title="${esc(nombre)}"></iframe>` : `<img src="${VURL}" alt="${esc(nombre)}">`;
+}
+function cerrarVisor() { $("#visor").classList.add("hidden"); $("#v-view").innerHTML = ""; if (VURL) { URL.revokeObjectURL(VURL); VURL = null; } }
+$("#v-cerrar").addEventListener("click", cerrarVisor);
+$("#v-sel").addEventListener("change", e => verArchivo(VLISTA[+e.target.value], VLISTA));
+$("#visor").addEventListener("click", e => { if (e.target.id === "visor") cerrarVisor(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#visor").classList.contains("hidden")) cerrarVisor(); });
+
 function limpiarForm() {
-  CAT = null; EDIT_ID = null; RESP = {};
+  CAT = null; EDIT_ID = null; RESP = {}; ARCH = []; NUEVOS = []; pintarArchivos();
   $$("#cats .cat").forEach(b => b.classList.remove("on"));
   $("#form-body").classList.add("hidden"); $("#edit-note").classList.add("hidden");
   $("#e-obra").value = ""; $("#e-part").value = ""; $("#e-obs").value = "";
@@ -398,9 +512,10 @@ $("#btn-guardar").addEventListener("click", async () => {
   const datos = {
     id: EDIT_ID || undefined, categoria: CAT, obra, participante: $("#e-part").value.trim(),
     respuestas: RESP, si: Object.values(RESP).filter(v => v === "si").length,
-    no: Object.values(RESP).filter(v => v === "no").length, lugar: lug ? lug.value : "", observaciones: $("#e-obs").value.trim()
+    no: Object.values(RESP).filter(v => v === "no").length, lugar: lug ? lug.value : "", observaciones: $("#e-obs").value.trim(),
+    archivos: ARCH, nuevosArchivos: NUEVOS.map(({ nombre, tipo, tam, b64 }) => ({ nombre, tipo, tam, b64 }))
   };
-  const btn = $("#btn-guardar"); btn.disabled = true; btn.textContent = "Guardando...";
+  const btn = $("#btn-guardar"); btn.disabled = true; btn.textContent = NUEVOS.length ? "Subiendo archivos..." : "Guardando...";
   try {
     await api("guardar", { datos });
     toast(EDIT_ID ? "Evaluación actualizada." : "Evaluación guardada.");
@@ -412,6 +527,7 @@ $("#btn-guardar").addEventListener("click", async () => {
 function editar(id) {
   const d = DATOS.find(x => x.id === id); if (!d) return;
   limpiarForm(); EDIT_ID = id; RESP = Object.assign({}, d.respuestas);
+  ARCH = (d.archivos || []).map(({ id, nombre, tipo, tam }) => ({ id, nombre, tipo, tam })); pintarArchivos();
   elegirCat(d.categoria, false);
   $("#e-obra").value = d.obra; $("#e-part").value = d.participante || ""; $("#e-obs").value = d.observaciones || "";
   $$("input[name=lugar]").forEach(r => r.checked = r.value === String(d.lugar || ""));
@@ -426,7 +542,9 @@ async function cargar() {
   $("#tb-lista").innerHTML = `<tr><td colspan="7" class="empty">Cargando...</td></tr>`;
   try {
     const r = await api("listar");
-    DATOS = (r.datos || []).map(d => Object.assign(d, { respuestas: typeof d.respuestas === "string" ? JSON.parse(d.respuestas || "{}") : (d.respuestas || {}) }))
+    DATOS = (r.datos || []).map(d => Object.assign(d, {
+        respuestas: typeof d.respuestas === "string" ? JSON.parse(d.respuestas || "{}") : (d.respuestas || {}),
+        archivos: typeof d.archivos === "string" ? JSON.parse(d.archivos || "[]") : (d.archivos || []) }))
       .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
     const evs = [...new Set(DATOS.map(d => d.evaluador))].sort();
     const sel = $("#fl-eval"), cur = sel.value;
@@ -453,7 +571,8 @@ function pintarLista() {
       ${admin ? `<td>${esc(d.evaluador)}</td>` : ""}
       <td><span class="pill ${d.no ? "bad" : "ok"}">${d.si}/${tot}</span></td>
       <td>${d.lugar ? `<span class="pill">${LUGAR_TXT[d.lugar]}</span>` : `<span class="count">—</span>`}</td>
-      <td class="acts"><button class="btn small" data-a="ed" data-id="${esc(d.id)}">Editar</button>
+      <td class="acts">${(d.archivos || []).length ? `<button class="btn small primary" data-a="ver" data-id="${esc(d.id)}">Ver obra${d.archivos.length > 1 ? ` (${d.archivos.length})` : ""}</button>
+        ` : ""}<button class="btn small" data-a="ed" data-id="${esc(d.id)}">Editar</button>
         <button class="btn small" data-a="pr" data-id="${esc(d.id)}">Imprimir</button>
         <button class="btn small danger" data-a="del" data-id="${esc(d.id)}">Eliminar</button></td></tr>`;
   }).join("") : `<tr><td colspan="7" class="empty">No hay evaluaciones${DATOS.length ? " con esos filtros" : " todavía"}.</td></tr>`;
@@ -463,6 +582,7 @@ $("#tb-lista").addEventListener("click", async e => {
   const id = b.dataset.id, d = DATOS.find(x => x.id === id);
   if (b.dataset.a === "ed") editar(id);
   if (b.dataset.a === "pr") imprimir(d);
+  if (b.dataset.a === "ver") verArchivo(d.archivos[0], d.archivos);
   if (b.dataset.a === "del") {
     if (!confirm(`¿Eliminar la evaluación de "${d.obra}"? Esta acción no se puede deshacer.`)) return;
     b.disabled = true;
@@ -523,6 +643,7 @@ function imprimir(d) {
   });
   const x = v => d.lugar === v ? "X" : "&nbsp;&nbsp;";
   h += `<p><b>Propongo esta obra artística para que sea considerada en:</b> Primer lugar ( ${x("1")} ) &nbsp; Segundo lugar ( ${x("2")} ) &nbsp; Tercer lugar ( ${x("3")} )</p>`;
+  if ((d.archivos || []).length) h += `<p><b>Archivos adjuntos:</b> ${d.archivos.map(x => esc(x.nombre)).join(", ")}</p>`;
   if (d.observaciones) h += `<p><b>Observaciones:</b> ${esc(d.observaciones)}</p>`;
   h += `<div class="firma"><div>${esc(d.evaluador)}<br>Nombre y firma de la persona evaluadora</div><div>${fecha(d.fecha)}<br>Fecha</div></div>`;
   $("#print").innerHTML = h; window.print();
