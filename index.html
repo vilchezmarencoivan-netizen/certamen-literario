@@ -158,7 +158,7 @@ footer{color:var(--muted);font-size:.8rem;text-align:center;padding:30px 0}
           <div><label class="f" for="e-obra" id="lbl-obra">Nombre de la obra *</label><input type="text" id="e-obra" maxlength="200"></div>
           <div><label class="f" for="e-part">Participante o código (opcional)</label><input type="text" id="e-part" maxlength="200"></div>
         </div>
-        <label class="f" for="e-file">Archivo de la obra (opcional: PDF, JPG o PNG, hasta 5 archivos)</label>
+        <label class="f" for="e-file">Archivo de la obra (opcional: PDF, JPG o PNG, hasta 15 archivos)</label>
         <div class="files">
           <input type="file" id="e-file" accept="application/pdf,image/jpeg,image/png" multiple>
           <ul class="flist" id="e-flist"></ul>
@@ -412,7 +412,7 @@ function pintarMarcas() {
 }
 /* ---------- Archivos de la obra ---------- */
 let ARCH = [], NUEVOS = []; // ARCH: ya guardados {id,nombre,tipo,tam}; NUEVOS: {nombre,tipo,tam,b64}
-const MAX_ARCH = 5, MAX_MB = 15;
+const MAX_ARCH = 15, MAX_MB = 15, MAX_TOTAL_MB = 40;
 const kb = n => n > 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB";
 const leerB64 = blob => new Promise((ok, mal) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.onerror = mal; r.readAsDataURL(blob); });
 // Las fotos se reducen (máx. 2200 px, JPEG) para que suban rápido; los PDF se envían tal cual.
@@ -506,6 +506,11 @@ $("#btn-guardar").addEventListener("click", async () => {
     faltan.forEach(c => $(`#secs .crit[data-k="${c.k}"]`).classList.add("miss"));
     err.textContent = `Faltan ${faltan.length} criterio(s) por marcar (resaltados en rojo).`;
     $(`#secs .crit[data-k="${faltan[0].k}"]`).scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
+  const totalNuevos = NUEVOS.reduce((t, a) => t + a.tam, 0);
+  if (totalNuevos > MAX_TOTAL_MB * 1048576) {
+    err.textContent = `Los archivos nuevos suman ${kb(totalNuevos)}; el máximo por guardado es ${MAX_TOTAL_MB} MB. Guarde con una parte y agregue el resto con "Editar".`;
     return;
   }
   const lug = $("input[name=lugar]:checked");
