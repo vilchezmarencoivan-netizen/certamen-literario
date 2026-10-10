@@ -429,10 +429,11 @@ async function api(accion, extra = {}, cred) {
     const eco = Math.random().toString(36).slice(2) + Date.now().toString(36);
     j = null;
     try {
-      const r = await fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign({ accion, eco }, base, extra)) });
+      const r = await fetch(API + (API.includes("?") ? "&" : "?") + "solicitud=" + encodeURIComponent(eco), { method: "POST", cache: "no-store", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign({ accion, eco }, base, extra)) });
       j = await r.json();
-      if (j && j.eco !== undefined && j.eco !== eco) j = null; // respuesta que no corresponde a esta solicitud
+      if (j && j.eco !== eco) j = null; // respuesta que no corresponde a esta solicitud
     } catch (e) { if (e.message === "Failed to fetch" && n === intentos) throw e; j = null; }
+    if (j && j.ok && accion === "verArchivo" && (typeof j.b64 !== "string" || !j.b64 || Number(j.parte) !== Number(extra.parte || 0))) j = null;
     if (j) break;
     if (n < intentos) await new Promise(r => setTimeout(r, 600 * n));
   }
