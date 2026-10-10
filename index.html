@@ -484,7 +484,7 @@ function aplicarDatos(r) {
     EVALS = (r.evaluaciones || []).sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
     CODIGO = r.codigo || "";
     if (SES.tipo === "staff") { pintarObras(); refrescarEvaluadores(); pintarEvals(); pintarResumen(); $("#cf-actual").textContent = CODIGO; }
-    else { pintarGrid(); precargar(); }
+    else { pintarGrid(); }
   }
 }
 // Mientras el evaluador mira la lista, se van descargando en segundo plano las obras que le faltan,
@@ -916,22 +916,29 @@ async function mostrarEn(cont, fs, i, vigente) {
   cont.innerHTML = `<p>Cargando...</p>`;
   try {
     if (i >= 0) { const b = await obtenerBlob(fs[i]); if (vigente()) await renderizar(cont, b, fs[i].nombre, vigente); return; }
-    // Se cargan de a 3 páginas a la vez y se muestran en orden.
-    let listos = 0;
-    const aviso = () => { if (fs.length > 1 && vigente()) cont.innerHTML = `<p>Cargando páginas: ${listos} de ${fs.length}...</p>`; };
-    aviso();
-    const blobs = new Array(fs.length); let sig = 0;
-    const trabajador = async () => { while (sig < fs.length) { const k = sig++; blobs[k] = await obtenerBlob(fs[k]); listos++; aviso(); } };
-    await Promise.all([trabajador(), trabajador(), trabajador()]);
+    // Mostrar cada archivo en cuanto llegue, sin esperar al resto de la obra.
     if (!vigente()) return;
     cont.innerHTML = "";
-    for (let k = 0; k < fs.length; k++) {
-      if (!vigente()) return;
+    const cajas = fs.map((a, k) => {
       const sep = document.createElement("div"); sep.className = "pag-sep"; sep.textContent = etiqueta(fs, k);
-      const box = document.createElement("div");
+      const box = document.createElement("div"); box.innerHTML = "<p>Cargando...</p>";
       cont.append(sep, box);
-      await renderizar(box, blobs[k], fs[k].nombre, vigente);
-    }
+      return box;
+    });
+    let sig = 0;
+    const trabajador = async () => {
+      while (sig < fs.length && vigente()) {
+        const k = sig++;
+        try {
+          const blob = await obtenerBlob(fs[k]);
+          if (!vigente()) return;
+          await renderizar(cajas[k], blob, fs[k].nombre, vigente);
+        } catch (e) {
+          if (vigente()) cajas[k].innerHTML = `<p>No se pudo abrir el archivo: ${esc(errMsg(e))}</p>`;
+        }
+      }
+    };
+    await Promise.all([trabajador(), trabajador()]);
   } catch (e) { if (vigente()) cont.innerHTML = `<p>No se pudo abrir el archivo: ${esc(errMsg(e))}</p>`; }
 }
 
