@@ -109,6 +109,50 @@ footer{color:var(--muted);font-size:.8rem;text-align:center;padding:30px 0}
   #print .firma{margin-top:40px;display:flex;justify-content:space-between;gap:30px}
   #print .firma div{flex:1;border-top:1px solid #000;text-align:center;padding-top:4px;font-size:10pt}
 }
+#login.login-grid{max-width:860px;margin:30px auto}
+.login-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:860px;margin:30px auto}
+@media (max-width:720px){.login-grid{grid-template-columns:1fr}}
+.login-grid .card{margin:0}
+.login-grid h2{margin:0 0 4px}
+.login-grid p.count{margin:0 0 6px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:12px}
+.grid-obras{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.obra{border:1px solid var(--line);border-radius:var(--radius);padding:14px;background:var(--surface-2);display:flex;flex-direction:column;gap:8px}
+.obra h4{margin:0;font-size:1rem}
+.obra .act{margin-top:auto;display:flex;gap:6px;flex-wrap:wrap}
+.obra.hecha{opacity:.75}
+.head-obra{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.head-obra h2{margin:0}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.progress{font-size:.9rem;color:var(--muted)}
+.mono{font-family:ui-monospace,Consolas,monospace;font-size:1.1rem;background:var(--surface-2);border:1px solid var(--line);padding:6px 10px;border-radius:6px;display:inline-block}
+.nowrap{white-space:nowrap}
+.pags{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.pags li{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px}
+.pags .mini{width:56px;height:72px;flex-shrink:0;border-radius:4px;background:var(--surface-2) center/cover no-repeat;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:var(--muted)}
+.pags .info{flex:1;min-width:0;font-size:.9rem}
+.pags .info b{display:block}
+.pags .info span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pags .bts{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.pags .bts .btn{min-width:34px}
+.pag-sep{color:#fff;font-size:.8rem;font-weight:700;text-align:center;margin:4px 0 6px;opacity:.85}
+body.ancho .wrap{max-width:1500px}
+.rub-layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start}
+.rub-layout.sin-doc{grid-template-columns:minmax(0,1fr);max-width:1000px;margin:0 auto}
+.rub-layout > .card{margin:16px 0 0}
+.doc-panel{position:sticky;top:10px;height:calc(100vh - 20px);display:flex;flex-direction:column;padding:0;overflow:hidden}
+.doc-bar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
+.doc-bar select{width:auto;flex:1;min-width:140px;padding:6px 8px}
+.doc-view{flex:1;overflow:auto;background:#525659;padding:10px}
+.doc-view canvas,.doc-view img{display:block;width:100%;height:auto;margin:0 auto 10px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.doc-view iframe{width:100%;height:100%;border:0;background:#fff}
+.doc-view p{color:#fff;text-align:center;padding:30px 10px;margin:0}
+.modal .view{padding:10px}
+.modal .view canvas{display:block;width:100%;max-width:900px;height:auto;margin:0 auto 10px;background:#fff}
+@media (max-width:1000px){
+  .rub-layout{grid-template-columns:minmax(0,1fr)}
+  .doc-panel{position:relative;top:0;height:70vh}
+}
 </style>
 </head>
 <body>
@@ -120,88 +164,162 @@ footer{color:var(--muted);font-size:.8rem;text-align:center;padding:30px 0}
 </header>
 
 <div id="app" class="wrap">
-  <div id="demo" class="banner hidden">Modo de prueba: no hay servidor configurado. Los datos se guardan solo en este navegador y cualquier contraseña es aceptada.</div>
+  <div id="sin-api" class="banner hidden">La página no tiene configurado el servidor (config.js).</div>
 
-  <!-- LOGIN -->
-  <section id="login" class="card">
-    <h2>Ingreso</h2>
-    <form id="f-login">
-      <label class="f" for="l-user">Usuario</label>
-      <select id="l-user" required>
+  <!-- ================= LOGIN ================= -->
+  <section id="login" class="login-grid">
+    <form class="card" id="f-eval">
+      <h2>Evaluadores</h2>
+      <p class="count">Escriba su nombre y el código de acceso que le dieron.</p>
+      <label class="f" for="le-nombre">Nombre y apellido</label>
+      <input type="text" id="le-nombre" autocomplete="name" maxlength="80" required>
+      <label class="f" for="le-codigo">Código de acceso</label>
+      <input type="text" id="le-codigo" autocomplete="off" autocapitalize="characters" maxlength="40" required>
+      <div class="err" id="le-err"></div>
+      <div class="actions"><button class="btn primary" type="submit">Entrar a evaluar</button></div>
+    </form>
+    <form class="card" id="f-staff">
+      <h2>Equipo organizador</h2>
+      <p class="count">Moderadoras y Administrador.</p>
+      <label class="f" for="ls-user">Usuario</label>
+      <select id="ls-user">
         <option value="ashly">Ashly Rodríguez</option>
         <option value="kathya">Kathya Ugalde</option>
         <option value="admin">Administrador</option>
       </select>
-      <label class="f" for="l-pass">Contraseña</label>
-      <input type="password" id="l-pass" autocomplete="current-password" required>
-      <div class="err" id="l-err"></div>
-      <div class="actions"><button class="btn primary" id="l-btn" type="submit">Ingresar</button></div>
+      <label class="f" for="ls-pass">Contraseña</label>
+      <input type="password" id="ls-pass" autocomplete="current-password" required>
+      <div class="err" id="ls-err"></div>
+      <div class="actions"><button class="btn primary" type="submit">Ingresar</button></div>
     </form>
   </section>
 
-  <!-- PRINCIPAL -->
-  <section id="main" class="hidden">
+  <!-- ================= EVALUADOR ================= -->
+  <section id="ev" class="hidden">
+    <div id="ev-lista" class="card">
+      <div class="toolbar">
+        <div><h2 style="margin:0">Obras para evaluar</h2><div class="progress" id="ev-prog"></div></div>
+        <div class="filters" style="margin:0">
+          <select id="ev-cat"><option value="">Todas las categorías</option></select>
+          <select id="ev-est"><option value="">Todas</option><option value="pend">Pendientes</option><option value="hechas">Ya evaluadas</option></select>
+          <button class="btn" id="ev-act" type="button">Actualizar</button>
+        </div>
+      </div>
+      <div class="grid-obras" id="ev-grid"></div>
+    </div>
+  </section>
+
+  <!-- ================= RÚBRICA (evaluar / editar) ================= -->
+  <section id="rub" class="hidden">
+   <div class="rub-layout" id="rb-layout">
+    <aside class="card doc-panel" id="rb-doc">
+      <div class="doc-bar">
+        <select id="rb-fsel" aria-label="Archivo de la obra"></select>
+        <button class="btn small" id="rb-bajar" type="button">Descargar</button>
+        <button class="btn small" id="rb-ampliar" type="button">Pantalla completa</button>
+      </div>
+      <div class="doc-view" id="rb-view"></div>
+    </aside>
+    <div class="card" id="rb-main">
+    <div class="head-obra">
+      <div><span class="pill" id="rb-cat"></span><h2 id="rb-titulo"></h2><div class="count" id="rb-sub"></div></div>
+      <button class="btn" id="rb-volver" type="button">Volver</button>
+    </div>
+    <div class="chips" id="rb-files"></div>
+    <div class="def" id="rb-def"></div>
+    <div id="rb-secs"></div>
+    <div class="sec">
+      <h3>Propongo esta obra artística para que sea considerada en:</h3>
+      <div class="lugares">
+        <label><input type="radio" name="lugar" value="1"> Primer lugar</label>
+        <label><input type="radio" name="lugar" value="2"> Segundo lugar</label>
+        <label><input type="radio" name="lugar" value="3"> Tercer lugar</label>
+        <label><input type="radio" name="lugar" value=""> Sin propuesta</label>
+      </div>
+    </div>
+    <label class="f" for="rb-obs">Observaciones (opcional)</label>
+    <textarea id="rb-obs" maxlength="2000"></textarea>
+    <div class="err" id="rb-err"></div>
+    <div class="actions">
+      <span class="count" id="rb-count"></span>
+      <button class="btn primary" id="rb-enviar" type="button">Enviar evaluación</button>
+    </div>
+      </div>
+   </div>
+  </section>
+
+  <!-- ================= EQUIPO ================= -->
+  <section id="st" class="hidden">
     <nav class="tabs" id="tabs">
-      <button data-v="nueva" class="on">Nueva evaluación</button>
-      <button data-v="lista" id="tab-lista">Mis evaluaciones</button>
-      <button data-v="resumen" id="tab-resumen" class="hidden">Resumen por obra</button>
+      <button data-v="obras" class="on">Obras</button>
+      <button data-v="evals">Evaluaciones</button>
+      <button data-v="resumen">Resumen</button>
+      <button data-v="config" class="hidden" id="tab-config">Configuración</button>
     </nav>
 
-    <!-- FORMULARIO -->
-    <div id="v-nueva" class="card">
-      <div id="edit-note" class="banner hidden"></div>
-      <label class="f">Categoría</label>
-      <div class="cats" id="cats"></div>
-      <div id="form-body" class="hidden">
-        <div class="def" id="def"></div>
-        <div class="grid2">
-          <div><label class="f" for="e-obra" id="lbl-obra">Nombre de la obra *</label><input type="text" id="e-obra" maxlength="200"></div>
-          <div><label class="f" for="e-part">Participante o código (opcional)</label><input type="text" id="e-part" maxlength="200"></div>
+    <!-- Obras -->
+    <div id="v-obras" class="card">
+      <div class="toolbar">
+        <button class="btn primary" id="ob-nueva" type="button">Subir nueva obra</button>
+        <div class="filters" style="margin:0">
+          <select id="ob-cat"><option value="">Todas las categorías</option></select>
+          <input type="text" id="ob-q" placeholder="Buscar título o autor">
+          <button class="btn" id="ob-act" type="button">Actualizar</button>
         </div>
-        <label class="f" for="e-file">Archivo de la obra (opcional: PDF, JPG o PNG, hasta 15 archivos)</label>
-        <div class="files">
-          <input type="file" id="e-file" accept="application/pdf,image/jpeg,image/png" multiple>
-          <ul class="flist" id="e-flist"></ul>
-        </div>
-        <div id="secs"></div>
-        <div class="sec">
-          <h3>Propongo esta obra artística para que sea considerada en:</h3>
-          <div class="lugares" id="lugares">
-            <label><input type="radio" name="lugar" value="1"> Primer lugar</label>
-            <label><input type="radio" name="lugar" value="2"> Segundo lugar</label>
-            <label><input type="radio" name="lugar" value="3"> Tercer lugar</label>
-            <label><input type="radio" name="lugar" value=""> Sin propuesta</label>
-          </div>
-        </div>
-        <label class="f" for="e-obs">Observaciones (opcional)</label>
-        <textarea id="e-obs" maxlength="2000"></textarea>
-        <div class="err" id="e-err"></div>
-        <div class="actions">
-          <span class="count" id="e-count"></span>
-          <button class="btn" id="btn-cancelar" type="button">Limpiar</button>
-          <button class="btn primary" id="btn-guardar" type="button">Guardar evaluación</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- LISTA -->
-    <div id="v-lista" class="card hidden">
-      <div class="filters">
-        <select id="fl-cat"><option value="">Todas las categorías</option></select>
-        <select id="fl-eval" class="hidden"><option value="">Todas las evaluadoras</option></select>
-        <input type="text" id="fl-q" placeholder="Buscar obra o participante">
-        <button class="btn" id="btn-refrescar" type="button">Actualizar</button>
-        <button class="btn" id="btn-csv" type="button">Exportar CSV</button>
       </div>
       <div class="tbl-wrap"><table><thead><tr>
-        <th>Fecha</th><th>Categoría</th><th>Obra</th><th id="th-eval" class="hidden">Evaluadora</th><th>Cumple</th><th>Lugar</th><th></th>
-      </tr></thead><tbody id="tb-lista"></tbody></table></div>
+        <th>Categoría</th><th>Obra</th><th>Autor</th><th>Evaluaciones</th><th></th>
+      </tr></thead><tbody id="ob-tb"></tbody></table></div>
     </div>
 
-    <!-- RESUMEN -->
+    <!-- Formulario de obra -->
+    <div id="v-obra-form" class="card hidden">
+      <div class="head-obra"><h2 id="of-tit">Subir nueva obra</h2><button class="btn" id="of-volver" type="button">Volver</button></div>
+      <label class="f">Categoría *</label>
+      <div class="cats" id="of-cats"></div>
+      <div class="grid2">
+        <div><label class="f" for="of-titulo">Nombre de la obra *</label><input type="text" id="of-titulo" maxlength="200"></div>
+        <div><label class="f" for="of-autor">Nombre del autor *</label><input type="text" id="of-autor" maxlength="200"></div>
+      </div>
+      <label class="f" for="of-file">Archivos de la obra (PDF, JPG o PNG; hasta 15 archivos de 15 MB)</label>
+      <div class="files">
+        <input type="file" id="of-file" accept="application/pdf,image/jpeg,image/png" multiple>
+        <p class="count" style="margin:8px 0 0">Si son fotos de un texto escrito a mano, súbalas todas juntas y revise que queden en orden de página (use ↑ ↓ para acomodarlas).</p>
+        <ul class="pags" id="of-flist"></ul>
+      </div>
+      <p class="count">Los evaluadores externos ven el nombre de la obra y los archivos, pero no el nombre del autor.</p>
+      <div class="err" id="of-err"></div>
+      <div class="actions"><button class="btn primary" id="of-guardar" type="button">Guardar obra</button></div>
+    </div>
+
+    <!-- Evaluaciones -->
+    <div id="v-evals" class="card hidden">
+      <div class="filters">
+        <select id="fe-cat"><option value="">Todas las categorías</option></select>
+        <select id="fe-ev"><option value="">Todos los evaluadores</option></select>
+        <input type="text" id="fe-q" placeholder="Buscar obra">
+        <button class="btn" id="fe-act" type="button">Actualizar</button>
+        <button class="btn" id="fe-csv" type="button">Exportar CSV</button>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr>
+        <th>Fecha</th><th>Evaluador</th><th>Categoría</th><th>Obra</th><th>Cumple</th><th>Lugar</th><th></th>
+      </tr></thead><tbody id="fe-tb"></tbody></table></div>
+    </div>
+
+    <!-- Resumen -->
     <div id="v-resumen" class="card hidden">
-      <p class="count">Lugar propuesto por cada evaluadora para cada obra (agrupado por categoría y nombre de la obra).</p>
+      <p class="count">Lugares propuestos por los evaluadores para cada obra. Puntos de referencia: Primer lugar = 3, Segundo = 2, Tercer = 1. La decisión final corresponde al jurado.</p>
       <div id="resumen"></div>
+    </div>
+
+    <!-- Configuración (solo Administrador) -->
+    <div id="v-config" class="card hidden">
+      <h3 style="margin-top:0">Código de acceso para evaluadores</h3>
+      <p>Código actual: <span class="mono" id="cf-actual"></span></p>
+      <p class="count">Compártalo junto con el enlace de la página. Si lo cambia, el código anterior deja de funcionar de inmediato.</p>
+      <label class="f" for="cf-nuevo">Nuevo código</label>
+      <div class="filters"><input type="text" id="cf-nuevo" maxlength="40" autocapitalize="characters"><button class="btn primary" id="cf-guardar" type="button">Cambiar código</button></div>
+      <div class="err" id="cf-err"></div>
     </div>
   </section>
 </div>
@@ -209,8 +327,7 @@ footer{color:var(--muted);font-size:.8rem;text-align:center;padding:30px 0}
 <div id="visor" class="modal hidden" role="dialog" aria-modal="true">
   <div class="box">
     <div class="bar"><b id="v-nombre"></b><select id="v-sel" class="hidden" style="width:auto;padding:4px 8px"></select><div>
-      <a class="btn small" id="v-abrir" target="_blank" rel="noopener">Abrir en pestaña nueva</a>
-      <a class="btn small" id="v-bajar">Descargar</a>
+      <button class="btn small" id="v-bajar" type="button">Descargar</button>
       <button class="btn small" id="v-cerrar" type="button">Cerrar</button></div></div>
     <div class="view" id="v-view"></div>
   </div>
@@ -221,15 +338,14 @@ footer{color:var(--muted);font-size:.8rem;text-align:center;padding:30px 0}
 <script src="config.js"></script>
 <script>
 "use strict";
-/* ---------- Rúbricas (tomadas del documento oficial) ---------- */
+/* ---------- Rúbricas (documento oficial) ---------- */
 const FORMATIVO_1 = "Promueve el reconocimiento y la valoración de la diversidad cultural, resaltando la riqueza de las diferentes culturas, tradiciones y costumbres que conforman nuestra sociedad. Fomenta la identidad cultural, el sentido de pertenencia, el respeto, la igualdad, la equidad y la convivencia pacífica, fortaleciendo una cultura de paz basada en el diálogo, la inclusión y la valoración de nuestras raíces culturales.";
 const DIGNIDAD = "La obra respeta en su totalidad la dignidad y diversidad humana, los derechos humanos y la equidad de género.";
 const REFLEXION = "El contenido general y mensaje de la obra artística incorpora una reflexión crítica y analítica de la realidad actual.";
 const INDIVIDUAL = "La participación es estrictamente individual.";
-
 const RUBRICAS = {
   cuento: {
-    nombre: "Cuento", obra: "Nombre del cuento",
+    nombre: "Cuento",
     def: "Narración literaria breve que presenta una historia, real o imaginaria, desarrollada a través de personajes, acontecimientos y un espacio y tiempo determinados. Generalmente posee una estructura con inicio, desarrollo y desenlace, y busca provocar en el lector una emoción, reflexión o experiencia significativa.",
     secciones: [
       { titulo: "Aspectos formativos de la propuesta artística", inst: "Marque Sí si cumple. Marque No si no cumple.",
@@ -240,7 +356,7 @@ const RUBRICAS = {
     ]
   },
   poesia: {
-    nombre: "Poesía", obra: "Nombre del poema",
+    nombre: "Poesía",
     def: "Expresión artística que utiliza las palabras de manera creativa para comunicar emociones, pensamientos, experiencias, imágenes o sentimientos. Puede emplear recursos literarios como la metáfora, la comparación, la personificación y la repetición. Puede escribirse con o sin rima y con diferentes estructuras y extensiones.",
     secciones: [
       { titulo: "Aspectos formativos de la propuesta artística", inst: "Marque Sí si cumple. Marque No si no cumple.", items: [FORMATIVO_1, DIGNIDAD, REFLEXION] },
@@ -259,7 +375,7 @@ const RUBRICAS = {
     ]
   },
   microrrelato: {
-    nombre: "Microrrelato", obra: "Nombre del microrrelato",
+    nombre: "Microrrelato",
     def: "Narración literaria muy breve que, mediante pocas palabras, desarrolla una situación, idea o historia. Se caracteriza por la concisión, la precisión del lenguaje y la capacidad de sugerir más de lo que expresa directamente. Puede presentar un final sorpresivo, abierto o que invite a la reflexión.",
     secciones: [
       { titulo: "Aspectos formativos de la propuesta artística", inst: "Marque Sí si cumple. Marque No si no cumple.", items: [FORMATIVO_1, DIGNIDAD, REFLEXION] },
@@ -277,13 +393,11 @@ const RUBRICAS = {
   }
 };
 const LUGAR_TXT = { "1": "Primer lugar", "2": "Segundo lugar", "3": "Tercer lugar", "": "Sin propuesta" };
-
-// Lista de criterios con clave estable: "s0-i2" o "s1-b" (bloque)
 function criterios(cat) {
   const out = [];
   RUBRICAS[cat].secciones.forEach((s, si) => {
-    if (s.bloque) out.push({ k: `s${si}-b`, sec: si });
-    else s.items.forEach((_, ii) => out.push({ k: `s${si}-i${ii}`, sec: si, item: ii }));
+    if (s.bloque) out.push(`s${si}-b`);
+    else s.items.forEach((_, ii) => out.push(`s${si}-i${ii}`));
   });
   return out;
 }
@@ -293,129 +407,223 @@ const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fecha = iso => { const d = new Date(iso); return isNaN(d) ? esc(iso) : d.toLocaleString("es-CR", { dateStyle: "short", timeStyle: "short" }); };
-function toast(msg) { const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); }
+const catNom = c => (RUBRICAS[c] || {}).nombre || c;
+const kb = n => n > 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB";
+const show = (id, on) => $(id).classList.toggle("hidden", !on);
+function toast(msg) { const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3500); }
 function ss(k, v) { try { if (v === undefined) return sessionStorage.getItem(k); if (v === null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); } catch (e) { return null; } }
+Object.keys(RUBRICAS).forEach(k => ["#ev-cat", "#ob-cat", "#fe-cat"].forEach(s => $(s).insertAdjacentHTML("beforeend", `<option value="${k}">${RUBRICAS[k].nombre}</option>`)));
 
-/* ---------- API (Apps Script o modo de prueba) ---------- */
+/* ---------- API ---------- */
 const API = (window.CONFIG && window.CONFIG.API_URL || "").trim();
-const DEMO = !API;
-const DEMO_USERS = { ashly: ["Ashly Rodríguez", "profesora"], kathya: ["Kathya Ugalde", "profesora"], admin: ["Administrador", "admin"] };
-let SES = null; // {usuario, clave, nombre, rol}
-let DATOS = [];
-
-async function api(accion, extra = {}) {
-  const body = Object.assign({ accion, usuario: SES ? SES.usuario : extra.usuario, clave: SES ? SES.clave : extra.clave }, extra);
-  if (DEMO) return demoApi(body);
-  const r = await fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) });
+let SES = null;      // staff: {tipo:'staff', usuario, clave, nombre, rol} | evaluador: {tipo:'evaluador', evaluador, codigo, nombre}
+let OBRAS = [], EVALS = [], CODIGO = "";
+async function api(accion, extra = {}, cred) {
+  const c = cred || SES;
+  const base = c.tipo === "staff" ? { usuario: c.usuario, clave: c.clave } : { evaluador: c.evaluador, codigo: c.codigo };
+  const r = await fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign({ accion }, base, extra)) });
   let j;
   try { j = await r.json(); } catch (e) { throw new Error("El servidor no respondió correctamente. Espere unos segundos e intente de nuevo."); }
-  if (!j.ok) throw new Error(j.error || "Error del servidor");
+  if (!j.ok) {
+    if (cred === undefined && /contraseña|código de acceso/i.test(j.error || "")) { ss("cl_ses", null); toast(j.error); setTimeout(() => location.reload(), 1500); }
+    throw new Error(j.error || "Error del servidor");
+  }
   return j;
 }
-function demoLoad() { try { return JSON.parse(localStorage.getItem("cl_demo") || "[]"); } catch (e) { return []; } }
-function demoSave(a) { try { localStorage.setItem("cl_demo", JSON.stringify(a)); } catch (e) {} }
-async function demoApi(b) {
-  const u = DEMO_USERS[b.usuario]; if (!u) throw new Error("Usuario no válido");
-  const admin = u[1] === "admin"; let a = demoLoad();
-  if (b.accion === "login") return { ok: true, usuario: { id: b.usuario, nombre: u[0], rol: u[1] } };
-  if (b.accion === "listar") return { ok: true, datos: admin ? a : a.filter(x => x.usuario === b.usuario) };
-  if (b.accion === "guardar") {
-    const now = new Date().toISOString(); const d = Object.assign({}, b.datos); const i = a.findIndex(x => x.id === d.id);
-    d.archivos = (d.archivos || []).concat((d.nuevosArchivos || []).map((n, j) => ({ id: "f" + Date.now() + j, nombre: n.nombre, tipo: n.tipo, tam: n.tam, b64: n.b64 })));
-    delete d.nuevosArchivos;
-    if (i >= 0) a[i] = Object.assign(a[i], d, { actualizado: now });
-    else a.push(Object.assign({}, d, { id: String(Date.now()), fecha: now, actualizado: now, usuario: b.usuario, evaluador: u[0] }));
-    demoSave(a); return { ok: true };
-  }
-  if (b.accion === "verArchivo") {
-    for (const x of a) for (const f of (x.archivos || [])) if (f.id === b.id) return { ok: true, nombre: f.nombre, tipo: f.tipo, b64: f.b64 };
-    throw new Error("Archivo no encontrado");
-  }
-  if (b.accion === "eliminar") { demoSave(a.filter(x => x.id !== b.id)); return { ok: true }; }
-}
+const errMsg = e => e.message === "Failed to fetch" ? "No se pudo conectar con el servidor. Revise su conexión a internet." : e.message;
 
-/* ---------- Login ---------- */
+/* ---------- Ingreso ---------- */
 $("#t-titulo").textContent = (window.CONFIG && CONFIG.TITULO) || "Certamen Literario";
 $("#t-sub").textContent = (window.CONFIG && CONFIG.SUBTITULO) || "";
-if (DEMO) $("#demo").classList.remove("hidden");
+if (!API) show("#sin-api", true);
 
-$("#f-login").addEventListener("submit", async e => {
-  e.preventDefault();
-  const usuario = $("#l-user").value, clave = $("#l-pass").value;
-  $("#l-err").textContent = ""; $("#l-btn").disabled = true;
+async function ingresar(form, cred, errSel) {
+  const btn = $("button[type=submit]", form); $(errSel).textContent = ""; btn.disabled = true;
   try {
-    const r = await api("login", { usuario, clave });
-    SES = { usuario, clave, nombre: r.usuario.nombre, rol: r.usuario.rol };
-    ss("cl_ses", JSON.stringify(SES));
-    entrar();
-  } catch (err) { $("#l-err").textContent = err.message === "Failed to fetch" ? "No se pudo conectar con el servidor." : err.message; }
-  finally { $("#l-btn").disabled = false; }
-});
-$("#btn-salir").addEventListener("click", () => { SES = null; ss("cl_ses", null); location.reload(); });
+    const r = await api("login", {}, cred);
+    SES = Object.assign(cred, { nombre: r.usuario.nombre, rol: r.usuario.rol });
+    ss("cl_ses", JSON.stringify(SES)); entrar();
+  } catch (e) { $(errSel).textContent = errMsg(e); }
+  finally { btn.disabled = false; }
+}
+$("#f-eval").addEventListener("submit", e => { e.preventDefault();
+  ingresar(e.target, { tipo: "evaluador", evaluador: $("#le-nombre").value.trim().replace(/\s+/g, " "), codigo: $("#le-codigo").value.trim() }, "#le-err"); });
+$("#f-staff").addEventListener("submit", e => { e.preventDefault();
+  ingresar(e.target, { tipo: "staff", usuario: $("#ls-user").value, clave: $("#ls-pass").value }, "#ls-err"); });
+$("#btn-salir").addEventListener("click", () => { ss("cl_ses", null); location.reload(); });
 
 function entrar() {
-  $("#login").classList.add("hidden"); $("#main").classList.remove("hidden");
-  $("#who").classList.remove("hidden"); $("#who-name").textContent = SES.nombre;
-  const admin = SES.rol === "admin";
-  $("#tab-lista").textContent = admin ? "Todas las evaluaciones" : "Mis evaluaciones";
-  $("#tab-resumen").classList.toggle("hidden", !admin);
-  $("#fl-eval").classList.toggle("hidden", !admin);
-  $("#th-eval").classList.toggle("hidden", !admin);
-  if (admin) vista("lista");
+  show("#login", false); show("#who", true);
+  $("#who-name").textContent = SES.tipo === "staff" ? `${SES.nombre} (${SES.rol === "admin" ? "Administrador" : "Moderadora"})` : SES.nombre;
+  if (SES.tipo === "staff") { show("#st", true); show("#tab-config", SES.rol === "admin"); vista("obras"); }
+  else show("#ev", true);
   cargar();
 }
-
-/* ---------- Navegación ---------- */
-$$("#tabs button").forEach(b => b.addEventListener("click", () => vista(b.dataset.v)));
-function vista(v) {
-  $$("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.v === v));
-  ["nueva", "lista", "resumen"].forEach(x => $("#v-" + x).classList.toggle("hidden", x !== v));
-  if (v === "resumen") pintarResumen();
+async function cargar() {
+  try {
+    const r = await api("datos");
+    OBRAS = (r.obras || []).sort((a, b) => a.categoria.localeCompare(b.categoria) || a.titulo.localeCompare(b.titulo));
+    EVALS = (r.evaluaciones || []).sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
+    CODIGO = r.codigo || "";
+    if (SES.tipo === "staff") { pintarObras(); refrescarEvaluadores(); pintarEvals(); pintarResumen(); $("#cf-actual").textContent = CODIGO; }
+    else pintarGrid();
+  } catch (e) { toast("No se pudieron cargar los datos: " + errMsg(e)); }
 }
 
-/* ---------- Formulario ---------- */
-let CAT = null, EDIT_ID = null, RESP = {};
-$("#cats").innerHTML = Object.entries(RUBRICAS).map(([k, r]) =>
-  `<button type="button" class="cat" data-c="${k}"><strong>${r.nombre}</strong><span>${criterios(k).length} criterios</span></button>`).join("");
-$$("#cats .cat").forEach(b => b.addEventListener("click", () => {
-  if (CAT && CAT !== b.dataset.c && Object.keys(RESP).length && !confirm("Cambiar de categoría borra las marcas actuales. ¿Continuar?")) return;
-  elegirCat(b.dataset.c, CAT !== b.dataset.c);
-}));
-Object.keys(RUBRICAS).forEach(k => $("#fl-cat").insertAdjacentHTML("beforeend", `<option value="${k}">${RUBRICAS[k].nombre}</option>`));
+/* ================= EVALUADOR ================= */
+function pintarGrid() {
+  const c = $("#ev-cat").value, est = $("#ev-est").value;
+  const hechas = OBRAS.filter(o => o.evaluada).length;
+  $("#ev-prog").textContent = OBRAS.length ? `Ha evaluado ${hechas} de ${OBRAS.length} obras.` : "";
+  const lista = OBRAS.filter(o => (!c || o.categoria === c) && (!est || (est === "hechas") === !!o.evaluada));
+  $("#ev-grid").innerHTML = lista.length ? lista.map(o => `<div class="obra${o.evaluada ? " hecha" : ""}">
+      <span class="pill">${esc(catNom(o.categoria))}</span><h4>${esc(o.titulo)}</h4>
+      <span class="count">${(o.archivos || []).length} archivo(s)</span>
+      <div class="act">${o.evaluada ? `<span class="pill ok">Evaluada ${fecha(o.evaluada)}</span>`
+        : `<button class="btn small primary" data-ev="${esc(o.id)}">Evaluar</button>`}
+        ${(o.archivos || []).length ? `<button class="btn small" data-ver="${esc(o.id)}">Ver obra</button><button class="btn small" data-bajar="${esc(o.id)}">Descargar${o.archivos.length > 1 ? ` (${o.archivos.length})` : ""}</button>` : ""}</div></div>`).join("")
+    : `<p class="empty">${OBRAS.length ? "No hay obras con ese filtro." : "Todavía no hay obras para evaluar."}</p>`;
+}
+["#ev-cat", "#ev-est"].forEach(s => $(s).addEventListener("change", pintarGrid));
+$("#ev-act").addEventListener("click", cargar);
+$("#ev-grid").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const o = OBRAS.find(x => x.id === (b.dataset.ev || b.dataset.ver || b.dataset.bajar));
+  if (b.dataset.ver) verArchivo(o.archivos.length > 1 ? null : o.archivos[0], o.archivos);
+  if (b.dataset.bajar) descargarTodos(o.archivos, b);
+  if (b.dataset.ev) abrirRubrica(o, null);
+});
 
-function elegirCat(cat, reset = true) {
-  CAT = cat; if (reset) RESP = {};
-  $$("#cats .cat").forEach(b => b.classList.toggle("on", b.dataset.c === cat));
-  const r = RUBRICAS[cat];
-  $("#form-body").classList.remove("hidden");
-  $("#def").innerHTML = `<b>Definición de ${r.nombre.toLowerCase()}:</b> ${r.def} <i>(La obra debe ser original.)</i>`;
-  $("#lbl-obra").textContent = r.obra + " *";
-  $("#secs").innerHTML = r.secciones.map((s, si) => `<div class="sec"><h3>${s.titulo}</h3><p class="inst">${s.inst}</p>${
-    s.bloque ? fila(`s${si}-b`, `<ul>${s.items.map(i => `<li>${i}</li>`).join("")}</ul>`)
-             : s.items.map((t, ii) => fila(`s${si}-i${ii}`, t)).join("")}</div>`).join("");
-  $$("#secs .yn button").forEach(b => b.addEventListener("click", () => {
-    RESP[b.dataset.k] = b.dataset.v; pintarMarcas();
-  }));
-  pintarMarcas(); $("#e-err").textContent = "";
+/* ================= RÚBRICA ================= */
+let RB = null; // {obra, evaluacion|null}
+let RESP = {};
+function abrirRubrica(obra, evaluacion) {
+  RB = { obra, ev: evaluacion }; RESP = evaluacion ? Object.assign({}, evaluacion.respuestas) : {};
+  const r = RUBRICAS[obra.categoria];
+  $("#rb-cat").textContent = r.nombre; $("#rb-titulo").textContent = obra.titulo;
+  $("#rb-sub").textContent = evaluacion ? `Evaluación de ${evaluacion.evaluador} · ${fecha(evaluacion.fecha)}${obra.autor ? " · Autor: " + obra.autor : ""}` : `Evaluador: ${SES.nombre}`;
+  const fs = obra.archivos || [];
+  $("#rb-files").innerHTML = fs.length ? "" : `<span class="count">Esta obra no tiene archivos adjuntos.</span>`;
+  $("#rb-layout").classList.toggle("sin-doc", !fs.length); show("#rb-doc", fs.length > 0);
+  document.body.classList.toggle("ancho", fs.length > 0);
+  $("#rb-fsel").innerHTML = (fs.length > 1 ? `<option value="-1">Todas las páginas (${fs.length})</option>` : "") +
+    fs.map((a, i) => `<option value="${i}">${esc(etiqueta(fs, i))}</option>`).join("");
+  $("#rb-view").innerHTML = "";
+  if (fs.length) setTimeout(() => panelArchivo(fs.length > 1 ? -1 : 0), 0);
+  $("#rb-def").innerHTML = `<b>Definición de ${r.nombre.toLowerCase()}:</b> ${r.def} <i>(La obra debe ser original.)</i>`;
+  $("#rb-secs").innerHTML = r.secciones.map((s, si) => `<div class="sec"><h3>${s.titulo}</h3><p class="inst">${s.inst}</p>${
+    s.bloque ? fila(`s${si}-b`, `<ul>${s.items.map(i => `<li>${i}</li>`).join("")}</ul>`) : s.items.map((t, ii) => fila(`s${si}-i${ii}`, t)).join("")}</div>`).join("");
+  $$("input[name=lugar]").forEach(x => x.checked = evaluacion ? x.value === String(evaluacion.lugar || "") : false);
+  $("#rb-obs").value = evaluacion ? evaluacion.observaciones || "" : "";
+  $("#rb-err").textContent = "";
+  $("#rb-enviar").textContent = evaluacion ? "Guardar corrección" : "Enviar evaluación";
+  pintarMarcas();
+  RB.volverA = SES.tipo === "staff" ? $$("#tabs button.on")[0].dataset.v : null;
+  show("#ev", false); show("#st", false); show("#rub", true); window.scrollTo(0, 0);
 }
 function fila(k, html) {
   return `<div class="crit" data-k="${k}"><div class="txt">${html}</div><div class="yn">
     <button type="button" class="si" data-k="${k}" data-v="si" aria-label="Sí cumple">✓ Sí</button>
     <button type="button" class="no" data-k="${k}" data-v="no" aria-label="No cumple">✘ No</button></div></div>`;
 }
-function pintarMarcas() {
-  $$("#secs .yn button").forEach(b => b.classList.toggle("on", RESP[b.dataset.k] === b.dataset.v));
-  $$("#secs .crit").forEach(c => { if (RESP[c.dataset.k]) c.classList.remove("miss"); });
-  const tot = criterios(CAT).length, hechos = criterios(CAT).filter(c => RESP[c.k]).length;
-  const si = Object.values(RESP).filter(v => v === "si").length;
-  $("#e-count").textContent = `${hechos} de ${tot} marcados · ${si} cumplen`;
+$("#rb-secs").addEventListener("click", e => { const b = e.target.closest(".yn button"); if (!b) return; RESP[b.dataset.k] = b.dataset.v; pintarMarcas(); });
+$("#rb-fsel").addEventListener("change", e => panelArchivo(+e.target.value));
+$("#rb-bajar").addEventListener("click", e => { const i = +$("#rb-fsel").value, fs = RB.obra.archivos; i < 0 ? descargarTodos(fs, e.target) : descargar(fs[i], e.target); });
+$("#rb-ampliar").addEventListener("click", () => { const i = +$("#rb-fsel").value, fs = RB.obra.archivos; verArchivo(i < 0 ? null : fs[i], fs); });
+let PANEL_TOKEN = 0;
+async function panelArchivo(i) {
+  if (!RB) return;
+  const tok = ++PANEL_TOKEN;
+  await mostrarEn($("#rb-view"), RB.obra.archivos, i, () => tok === PANEL_TOKEN);
 }
-/* ---------- Archivos de la obra ---------- */
-let ARCH = [], NUEVOS = []; // ARCH: ya guardados {id,nombre,tipo,tam}; NUEVOS: {nombre,tipo,tam,b64}
+function pintarMarcas() {
+  $$("#rb-secs .yn button").forEach(b => b.classList.toggle("on", RESP[b.dataset.k] === b.dataset.v));
+  $$("#rb-secs .crit").forEach(c => { if (RESP[c.dataset.k]) c.classList.remove("miss"); });
+  const ks = criterios(RB.obra.categoria), hechos = ks.filter(k => RESP[k]).length, si = ks.filter(k => RESP[k] === "si").length;
+  $("#rb-count").textContent = `${hechos} de ${ks.length} marcados · ${si} cumplen`;
+}
+function cerrarRubrica() {
+  show("#rub", false); PANEL_TOKEN++; $("#rb-view").innerHTML = ""; document.body.classList.remove("ancho");
+  if (SES.tipo === "staff") { show("#st", true); vista(RB.volverA || "evals"); } else show("#ev", true);
+  RB = null;
+}
+$("#rb-volver").addEventListener("click", () => { if (Object.keys(RESP).length && !RB.ev && !confirm("¿Salir sin enviar? Se perderán las marcas.")) return; cerrarRubrica(); });
+$("#rb-enviar").addEventListener("click", async () => {
+  const err = $("#rb-err"); err.textContent = "";
+  const faltan = criterios(RB.obra.categoria).filter(k => !RESP[k]);
+  if (faltan.length) {
+    faltan.forEach(k => $(`#rb-secs .crit[data-k="${k}"]`).classList.add("miss"));
+    err.textContent = `Faltan ${faltan.length} criterio(s) por marcar (resaltados en rojo).`;
+    $(`#rb-secs .crit[data-k="${faltan[0]}"]`).scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
+  const lug = $("input[name=lugar]:checked");
+  const datos = { respuestas: RESP, lugar: lug ? lug.value : "", observaciones: $("#rb-obs").value.trim() };
+  if (!RB.ev && !confirm(`¿Enviar la evaluación de "${RB.obra.titulo}"? Una vez enviada no se puede modificar.`)) return;
+  const btn = $("#rb-enviar"); btn.disabled = true;
+  try {
+    if (RB.ev) await api("editarEvaluacion", { datos: Object.assign(datos, { id: RB.ev.id }) });
+    else await api("evaluar", { datos: Object.assign(datos, { obraId: RB.obra.id }) });
+    toast(RB.ev ? "Corrección guardada." : "Evaluación enviada. ¡Gracias!");
+    cerrarRubrica(); await cargar();
+  } catch (e) { err.textContent = "No se pudo guardar: " + errMsg(e); }
+  finally { btn.disabled = false; }
+});
+
+/* ================= EQUIPO: navegación ================= */
+$$("#tabs button").forEach(b => b.addEventListener("click", () => vista(b.dataset.v)));
+function vista(v) {
+  $$("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.v === v));
+  ["obras", "evals", "resumen", "config"].forEach(x => show("#v-" + x, x === v));
+  show("#v-obra-form", false);
+}
+
+/* ---------- Obras ---------- */
+const evalsDe = id => EVALS.filter(e => e.obraId === id);
+function pintarObras() {
+  const c = $("#ob-cat").value, q = $("#ob-q").value.trim().toLowerCase();
+  const rows = OBRAS.filter(o => (!c || o.categoria === c) && (!q || (o.titulo + " " + o.autor).toLowerCase().includes(q)));
+  const admin = SES.rol === "admin";
+  $("#ob-tb").innerHTML = rows.length ? rows.map(o => { const ev = evalsDe(o.id);
+    return `<tr><td>${esc(catNom(o.categoria))}</td><td><b>${esc(o.titulo)}</b><br><span class="count">${(o.archivos || []).length} archivo(s) · subida por ${esc(o.creadoPor)}</span></td>
+      <td>${esc(o.autor)}</td>
+      <td>${ev.length ? `<span class="pill ok">${ev.length}</span> <span class="count">${ev.map(e => esc(e.evaluador)).join(", ")}</span>` : `<span class="count">Sin evaluar</span>`}</td>
+      <td class="acts">${(o.archivos || []).length ? `<button class="btn small" data-a="ver" data-id="${esc(o.id)}">Ver obra</button> ` : ""}<button class="btn small" data-a="ed" data-id="${esc(o.id)}">Editar</button>
+        ${admin ? `<button class="btn small danger" data-a="del" data-id="${esc(o.id)}">Eliminar</button>` : ""}</td></tr>`; }).join("")
+    : `<tr><td colspan="5" class="empty">${OBRAS.length ? "No hay obras con ese filtro." : "Todavía no hay obras. Use \"Subir nueva obra\"."}</td></tr>`;
+}
+$("#ob-cat").addEventListener("change", pintarObras); $("#ob-q").addEventListener("input", pintarObras); $("#ob-act").addEventListener("click", cargar);
+$("#ob-tb").addEventListener("click", async e => {
+  const b = e.target.closest("button[data-a]"); if (!b) return;
+  const o = OBRAS.find(x => x.id === b.dataset.id);
+  if (b.dataset.a === "ver") verArchivo(o.archivos.length > 1 ? null : o.archivos[0], o.archivos);
+  if (b.dataset.a === "ed") abrirObra(o);
+  if (b.dataset.a === "del") {
+    if (!confirm(`¿Eliminar la obra "${o.titulo}" y sus archivos? Esta acción no se puede deshacer.`)) return;
+    b.disabled = true;
+    try { await api("eliminarObra", { id: o.id }); toast("Obra eliminada."); await cargar(); }
+    catch (err) { toast(errMsg(err)); b.disabled = false; }
+  }
+});
+
+/* ---------- Formulario de obra ---------- */
+// PAGS: lista ordenada de archivos de la obra. {ex: archivo guardado} o {nuevo: {nombre,tipo,tam,b64,blob,url}}
+let OF = null, OF_CAT = null, PAGS = [];
 const MAX_ARCH = 15, MAX_MB = 15, MAX_TOTAL_MB = 40;
-const kb = n => n > 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB";
+$("#of-cats").innerHTML = Object.entries(RUBRICAS).map(([k, r]) => `<button type="button" class="cat" data-c="${k}"><strong>${r.nombre}</strong></button>`).join("");
+$("#of-cats").addEventListener("click", e => { const b = e.target.closest(".cat"); if (!b) return; OF_CAT = b.dataset.c; $$("#of-cats .cat").forEach(x => x.classList.toggle("on", x === b)); });
+function limpiarPags() { PAGS.forEach(p => p.nuevo && p.nuevo.url && URL.revokeObjectURL(p.nuevo.url)); PAGS = []; }
+function abrirObra(o) {
+  OF = o || null; OF_CAT = o ? o.categoria : null;
+  $("#of-tit").textContent = o ? "Editar obra" : "Subir nueva obra";
+  $$("#of-cats .cat").forEach(x => x.classList.toggle("on", x.dataset.c === OF_CAT));
+  $("#of-titulo").value = o ? o.titulo : ""; $("#of-autor").value = o ? o.autor : "";
+  limpiarPags(); PAGS = o ? (o.archivos || []).map(a => ({ ex: a })) : []; pintarArchivos();
+  $("#of-err").textContent = ""; show("#v-obras", false); show("#v-obra-form", true); window.scrollTo(0, 0);
+}
+$("#ob-nueva").addEventListener("click", () => abrirObra(null));
+$("#of-volver").addEventListener("click", () => { limpiarPags(); show("#v-obra-form", false); show("#v-obras", true); });
 const leerB64 = blob => new Promise((ok, mal) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.onerror = mal; r.readAsDataURL(blob); });
-// Las fotos se reducen (máx. 2200 px, JPEG) para que suban rápido; los PDF se envían tal cual.
 async function prepararImagen(file) {
   if (file.size < 1.5 * 1048576) return file;
   try {
@@ -427,235 +635,290 @@ async function prepararImagen(file) {
     return blob && blob.size < file.size ? new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" }) : file;
   } catch (e) { return file; }
 }
-$("#e-file").addEventListener("change", async e => {
-  const err = $("#e-err"); err.textContent = "";
-  for (let f of [...e.target.files]) {
-    if (ARCH.length + NUEVOS.length >= MAX_ARCH) { err.textContent = `Máximo ${MAX_ARCH} archivos por evaluación.`; break; }
+$("#of-file").addEventListener("change", async e => {
+  const err = $("#of-err"); err.textContent = "";
+  // Se ordenan por nombre: las fotos del celular (IMG_20261010_...) quedan en el orden en que se tomaron.
+  const sel = [...e.target.files].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+  e.target.value = "";
+  for (let f of sel) {
+    if (PAGS.length >= MAX_ARCH) { err.textContent = `Máximo ${MAX_ARCH} archivos por obra.`; break; }
     if (!["application/pdf", "image/jpeg", "image/png"].includes(f.type)) { err.textContent = `"${f.name}" no es PDF, JPG ni PNG.`; continue; }
     if (f.type !== "application/pdf") f = await prepararImagen(f);
     if (f.size > MAX_MB * 1048576) { err.textContent = `"${f.name}" pesa más de ${MAX_MB} MB.`; continue; }
-    NUEVOS.push({ nombre: f.name, tipo: f.type, tam: f.size, b64: await leerB64(f), blob: f });
+    PAGS.push({ nuevo: { nombre: f.name, tipo: f.type, tam: f.size, b64: await leerB64(f), blob: f, url: f.type !== "application/pdf" ? URL.createObjectURL(f) : "" } });
   }
-  e.target.value = ""; pintarArchivos();
+  pintarArchivos();
 });
 function pintarArchivos() {
-  const li = (nombre, tam, acciones) => `<li><span title="${esc(nombre)}">${esc(nombre)} <span class="count">(${kb(tam)})</span></span><div>${acciones}</div></li>`;
-  $("#e-flist").innerHTML =
-    ARCH.map((a, i) => li(a.nombre, a.tam || 0, `<button type="button" class="btn small" data-fv="${i}">Ver</button><button type="button" class="btn small danger" data-fq="${i}">Quitar</button>`)).join("") +
-    NUEVOS.map((a, i) => li(a.nombre + " · nuevo", a.tam, `<button type="button" class="btn small" data-nv="${i}">Ver</button><button type="button" class="btn small danger" data-nq="${i}">Quitar</button>`)).join("");
+  const n = PAGS.length;
+  $("#of-flist").innerHTML = PAGS.map((p, i) => {
+    const a = p.ex || p.nuevo, img = a.tipo !== "application/pdf";
+    const mini = p.nuevo && p.nuevo.url ? `style="background-image:url('${p.nuevo.url}')"` : "";
+    return `<li><div class="mini" ${mini} data-mini="${i}">${mini ? "" : img ? "IMG" : "PDF"}</div>
+      <div class="info"><b>${n > 1 ? (img ? "Página " : "Archivo ") + (i + 1) : (img ? "Imagen" : "PDF")}</b>
+        <span title="${esc(a.original || a.nombre)}">${esc(a.original || a.nombre)} · ${kb(a.tam || 0)}${p.nuevo ? " · nuevo" : ""}</span></div>
+      <div class="bts"><button type="button" class="btn small" data-up="${i}" ${i ? "" : "disabled"} aria-label="Subir">↑</button>
+        <button type="button" class="btn small" data-down="${i}" ${i < n - 1 ? "" : "disabled"} aria-label="Bajar">↓</button>
+        <button type="button" class="btn small" data-ver="${i}">Ver</button>
+        <button type="button" class="btn small danger" data-quitar="${i}">Quitar</button></div></li>`;
+  }).join("");
+  // Miniaturas de las fotos ya guardadas (se cargan del servidor).
+  PAGS.forEach(async (p, i) => {
+    if (!p.ex || p.ex.tipo === "application/pdf") return;
+    try { const b = await obtenerBlob(p.ex); const el = $(`#of-flist [data-mini="${i}"]`);
+      if (el && PAGS[i] === p) { p.thumb = p.thumb || URL.createObjectURL(b); el.style.backgroundImage = `url('${p.thumb}')`; el.textContent = ""; } } catch (e) {}
+  });
 }
-$("#e-flist").addEventListener("click", e => {
+$("#of-flist").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
-  if (b.dataset.fv) verArchivo(ARCH[+b.dataset.fv], ARCH);
-  if (b.dataset.fq && confirm("¿Quitar este archivo? Se eliminará al guardar la evaluación.")) { ARCH.splice(+b.dataset.fq, 1); pintarArchivos(); }
-  if (b.dataset.nv) { $("#v-sel").classList.add("hidden"); mostrar(NUEVOS[+b.dataset.nv].nombre, NUEVOS[+b.dataset.nv].blob); }
-  if (b.dataset.nq) { NUEVOS.splice(+b.dataset.nq, 1); pintarArchivos(); }
+  const d = b.dataset;
+  if (d.up) { const i = +d.up; [PAGS[i - 1], PAGS[i]] = [PAGS[i], PAGS[i - 1]]; pintarArchivos(); }
+  if (d.down) { const i = +d.down; [PAGS[i + 1], PAGS[i]] = [PAGS[i], PAGS[i + 1]]; pintarArchivos(); }
+  if (d.quitar) { const p = PAGS[+d.quitar];
+    if (p.ex && !confirm("¿Quitar este archivo? Se eliminará al guardar la obra.")) return;
+    if (p.nuevo && p.nuevo.url) URL.revokeObjectURL(p.nuevo.url); PAGS.splice(+d.quitar, 1); pintarArchivos(); }
+  if (d.ver) { const p = PAGS[+d.ver];
+    if (p.ex) { const ex = PAGS.filter(x => x.ex).map(x => x.ex); verArchivo(p.ex, ex); }
+    else { VACTUAL = null; VLISTA = []; show("#v-sel", false); show("#visor", true); show("#v-bajar", false);
+      $("#v-nombre").textContent = p.nuevo.nombre; const tok = ++VTOKEN; renderizar($("#v-view"), p.nuevo.blob, p.nuevo.nombre, () => tok === VTOKEN); } }
+});
+$("#of-guardar").addEventListener("click", async () => {
+  const err = $("#of-err"); err.textContent = "";
+  const titulo = $("#of-titulo").value.trim(), autor = $("#of-autor").value.trim();
+  if (!OF_CAT) { err.textContent = "Seleccione la categoría."; return; }
+  if (!titulo) { err.textContent = "Escriba el nombre de la obra."; $("#of-titulo").focus(); return; }
+  if (!autor) { err.textContent = "Escriba el nombre del autor."; $("#of-autor").focus(); return; }
+  if (!PAGS.length && !confirm("La obra no tiene archivos. ¿Guardar de todas formas?")) return;
+  const nuevos = PAGS.filter(p => p.nuevo).map(p => p.nuevo);
+  const total = nuevos.reduce((t, a) => t + a.tam, 0);
+  if (total > MAX_TOTAL_MB * 1048576) { err.textContent = `Los archivos nuevos suman ${kb(total)}; el máximo por guardado es ${MAX_TOTAL_MB} MB. Guarde una parte y agregue el resto con "Editar".`; return; }
+  let k = 0; const orden = PAGS.map(p => p.ex ? "id:" + p.ex.id : "n:" + (k++));
+  const btn = $("#of-guardar"); btn.disabled = true; btn.textContent = nuevos.length ? "Subiendo archivos..." : "Guardando...";
+  try {
+    await api("guardarObra", { datos: { id: OF ? OF.id : undefined, categoria: OF_CAT, titulo, autor, orden,
+      archivos: PAGS.filter(p => p.ex).map(p => ({ id: p.ex.id })),
+      nuevosArchivos: nuevos.map(({ nombre, tipo, tam, b64 }) => ({ nombre, tipo, tam, b64 })) } });
+    toast(OF ? "Obra actualizada." : "Obra subida.");
+    limpiarPags(); show("#v-obra-form", false); show("#v-obras", true); await cargar();
+  } catch (e) { err.textContent = "No se pudo guardar: " + errMsg(e); }
+  finally { btn.disabled = false; btn.textContent = "Guardar obra"; }
 });
 
-/* ---------- Visor ---------- */
-const CACHE = {};
-let VURL = null;
-let VLISTA = [];
-async function verArchivo(a, lista) {
-  VLISTA = lista || [a];
-  const sel = $("#v-sel");
-  sel.innerHTML = VLISTA.map((x, i) => `<option value="${i}">${i + 1}. ${esc(x.nombre)}</option>`).join("");
-  sel.value = String(VLISTA.indexOf(a)); sel.classList.toggle("hidden", VLISTA.length < 2);
-  mostrar(a.nombre, null);
-  try {
-    if (!CACHE[a.id]) {
-      const r = await api("verArchivo", { id: a.id });
-      const bin = atob(r.b64), u8 = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
-      CACHE[a.id] = new Blob([u8], { type: r.tipo || a.tipo });
-    }
-    if (!$("#visor").classList.contains("hidden")) mostrar(a.nombre, CACHE[a.id]);
-  } catch (e) { $("#v-view").innerHTML = `<p>No se pudo abrir el archivo: ${esc(e.message)}</p>`; }
-}
-function mostrar(nombre, blob) {
-  $("#visor").classList.remove("hidden"); $("#v-nombre").textContent = nombre;
-  if (VURL) { URL.revokeObjectURL(VURL); VURL = null; }
-  const ab = $("#v-abrir"), bj = $("#v-bajar");
-  if (!blob) { $("#v-view").innerHTML = `<p>Cargando archivo...</p>`; ab.classList.add("hidden"); bj.classList.add("hidden"); return; }
-  VURL = URL.createObjectURL(blob);
-  ab.href = VURL; bj.href = VURL; bj.download = nombre; ab.classList.remove("hidden"); bj.classList.remove("hidden");
-  $("#v-view").innerHTML = blob.type === "application/pdf" ? `<iframe src="${VURL}" title="${esc(nombre)}"></iframe>` : `<img src="${VURL}" alt="${esc(nombre)}">`;
-}
-function cerrarVisor() { $("#visor").classList.add("hidden"); $("#v-view").innerHTML = ""; if (VURL) { URL.revokeObjectURL(VURL); VURL = null; } }
-$("#v-cerrar").addEventListener("click", cerrarVisor);
-$("#v-sel").addEventListener("change", e => verArchivo(VLISTA[+e.target.value], VLISTA));
-$("#visor").addEventListener("click", e => { if (e.target.id === "visor") cerrarVisor(); });
-document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#visor").classList.contains("hidden")) cerrarVisor(); });
-
-function limpiarForm() {
-  CAT = null; EDIT_ID = null; RESP = {}; ARCH = []; NUEVOS = []; pintarArchivos();
-  $$("#cats .cat").forEach(b => b.classList.remove("on"));
-  $("#form-body").classList.add("hidden"); $("#edit-note").classList.add("hidden");
-  $("#e-obra").value = ""; $("#e-part").value = ""; $("#e-obs").value = "";
-  $$("input[name=lugar]").forEach(r => r.checked = false);
-  $("#btn-guardar").textContent = "Guardar evaluación";
-}
-$("#btn-cancelar").addEventListener("click", () => { if (confirm("¿Limpiar el formulario?")) limpiarForm(); });
-
-$("#btn-guardar").addEventListener("click", async () => {
-  const err = $("#e-err"); err.textContent = "";
-  const obra = $("#e-obra").value.trim();
-  if (!obra) { err.textContent = "Escriba el nombre de la obra."; $("#e-obra").focus(); return; }
-  const faltan = criterios(CAT).filter(c => !RESP[c.k]);
-  if (faltan.length) {
-    faltan.forEach(c => $(`#secs .crit[data-k="${c.k}"]`).classList.add("miss"));
-    err.textContent = `Faltan ${faltan.length} criterio(s) por marcar (resaltados en rojo).`;
-    $(`#secs .crit[data-k="${faltan[0].k}"]`).scrollIntoView({ behavior: "smooth", block: "center" });
-    return;
-  }
-  const totalNuevos = NUEVOS.reduce((t, a) => t + a.tam, 0);
-  if (totalNuevos > MAX_TOTAL_MB * 1048576) {
-    err.textContent = `Los archivos nuevos suman ${kb(totalNuevos)}; el máximo por guardado es ${MAX_TOTAL_MB} MB. Guarde con una parte y agregue el resto con "Editar".`;
-    return;
-  }
-  const lug = $("input[name=lugar]:checked");
-  const datos = {
-    id: EDIT_ID || undefined, categoria: CAT, obra, participante: $("#e-part").value.trim(),
-    respuestas: RESP, si: Object.values(RESP).filter(v => v === "si").length,
-    no: Object.values(RESP).filter(v => v === "no").length, lugar: lug ? lug.value : "", observaciones: $("#e-obs").value.trim(),
-    archivos: ARCH, nuevosArchivos: NUEVOS.map(({ nombre, tipo, tam, b64 }) => ({ nombre, tipo, tam, b64 }))
-  };
-  const btn = $("#btn-guardar"); btn.disabled = true; btn.textContent = NUEVOS.length ? "Subiendo archivos..." : "Guardando...";
-  try {
-    await api("guardar", { datos });
-    toast(EDIT_ID ? "Evaluación actualizada." : "Evaluación guardada.");
-    limpiarForm(); await cargar(); vista("lista");
-  } catch (e) { err.textContent = "No se pudo guardar: " + e.message; }
-  finally { btn.disabled = false; btn.textContent = EDIT_ID ? "Guardar cambios" : "Guardar evaluación"; }
-});
-
-function editar(id) {
-  const d = DATOS.find(x => x.id === id); if (!d) return;
-  limpiarForm(); EDIT_ID = id; RESP = Object.assign({}, d.respuestas);
-  ARCH = (d.archivos || []).map(({ id, nombre, tipo, tam }) => ({ id, nombre, tipo, tam })); pintarArchivos();
-  elegirCat(d.categoria, false);
-  $("#e-obra").value = d.obra; $("#e-part").value = d.participante || ""; $("#e-obs").value = d.observaciones || "";
-  $$("input[name=lugar]").forEach(r => r.checked = r.value === String(d.lugar || ""));
-  $("#edit-note").textContent = `Editando la evaluación de "${d.obra}" (${d.evaluador}). Al guardar se reemplazan los datos anteriores.`;
-  $("#edit-note").classList.remove("hidden");
-  $("#btn-guardar").textContent = "Guardar cambios";
-  vista("nueva"); window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
-/* ---------- Lista ---------- */
-async function cargar() {
-  $("#tb-lista").innerHTML = `<tr><td colspan="7" class="empty">Cargando...</td></tr>`;
-  try {
-    const r = await api("listar");
-    DATOS = (r.datos || []).map(d => Object.assign(d, {
-        respuestas: typeof d.respuestas === "string" ? JSON.parse(d.respuestas || "{}") : (d.respuestas || {}),
-        archivos: typeof d.archivos === "string" ? JSON.parse(d.archivos || "[]") : (d.archivos || []) }))
-      .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
-    const evs = [...new Set(DATOS.map(d => d.evaluador))].sort();
-    const sel = $("#fl-eval"), cur = sel.value;
-    sel.innerHTML = `<option value="">Todas las evaluadoras</option>` + evs.map(e => `<option>${esc(e)}</option>`).join("");
-    sel.value = evs.includes(cur) ? cur : "";
-    pintarLista();
-    if (!$("#v-resumen").classList.contains("hidden")) pintarResumen();
-  } catch (e) {
-    if (/contraseña/i.test(e.message)) { ss("cl_ses", null); location.reload(); return; }
-    $("#tb-lista").innerHTML = `<tr><td colspan="7" class="empty">No se pudieron cargar los datos: ${esc(e.message)}</td></tr>`;
-  }
+/* ---------- Evaluaciones ---------- */
+function refrescarEvaluadores() {
+  const evs = [...new Set(EVALS.map(e => e.evaluador))].sort((a, b) => a.localeCompare(b));
+  const sel = $("#fe-ev"), cur = sel.value;
+  sel.innerHTML = `<option value="">Todos los evaluadores</option>` + evs.map(e => `<option>${esc(e)}</option>`).join("");
+  sel.value = evs.includes(cur) ? cur : "";
 }
 function filtrados() {
-  const c = $("#fl-cat").value, ev = $("#fl-eval").value, q = $("#fl-q").value.trim().toLowerCase();
-  return DATOS.filter(d => (!c || d.categoria === c) && (!ev || d.evaluador === ev) &&
-    (!q || (d.obra + " " + (d.participante || "")).toLowerCase().includes(q)));
+  const c = $("#fe-cat").value, ev = $("#fe-ev").value, q = $("#fe-q").value.trim().toLowerCase();
+  return EVALS.filter(e => (!c || e.categoria === c) && (!ev || e.evaluador === ev) && (!q || String(e.obra).toLowerCase().includes(q)));
 }
-function pintarLista() {
+function pintarEvals() {
   const admin = SES.rol === "admin", rows = filtrados();
-  $("#tb-lista").innerHTML = rows.length ? rows.map(d => {
-    const tot = criterios(d.categoria).length;
-    return `<tr><td>${fecha(d.fecha)}</td><td>${esc(RUBRICAS[d.categoria]?.nombre || d.categoria)}</td>
-      <td><b>${esc(d.obra)}</b>${d.participante ? `<br><span class="count">${esc(d.participante)}</span>` : ""}</td>
-      ${admin ? `<td>${esc(d.evaluador)}</td>` : ""}
-      <td><span class="pill ${d.no ? "bad" : "ok"}">${d.si}/${tot}</span></td>
-      <td>${d.lugar ? `<span class="pill">${LUGAR_TXT[d.lugar]}</span>` : `<span class="count">—</span>`}</td>
-      <td class="acts">${(d.archivos || []).length ? `<button class="btn small primary" data-a="ver" data-id="${esc(d.id)}">Ver obra${d.archivos.length > 1 ? ` (${d.archivos.length})` : ""}</button>
-        ` : ""}<button class="btn small" data-a="ed" data-id="${esc(d.id)}">Editar</button>
-        <button class="btn small" data-a="pr" data-id="${esc(d.id)}">Imprimir</button>
-        <button class="btn small danger" data-a="del" data-id="${esc(d.id)}">Eliminar</button></td></tr>`;
-  }).join("") : `<tr><td colspan="7" class="empty">No hay evaluaciones${DATOS.length ? " con esos filtros" : " todavía"}.</td></tr>`;
+  $("#fe-tb").innerHTML = rows.length ? rows.map(e => {
+    const tot = criterios(e.categoria).length;
+    return `<tr><td class="nowrap">${fecha(e.fecha)}</td><td>${esc(e.evaluador)}${e.editadoPor ? `<br><span class="count">Corregida por ${esc(e.editadoPor)}</span>` : ""}</td>
+      <td>${esc(catNom(e.categoria))}</td><td><b>${esc(e.obra)}</b></td>
+      <td><span class="pill ${e.no ? "bad" : "ok"}">${e.si}/${tot}</span></td>
+      <td>${e.lugar ? `<span class="pill">${LUGAR_TXT[e.lugar]}</span>` : `<span class="count">—</span>`}</td>
+      <td class="acts"><button class="btn small" data-a="pr" data-id="${esc(e.id)}">Imprimir</button>
+        <button class="btn small" data-a="ed" data-id="${esc(e.id)}">Corregir</button>
+        ${admin ? `<button class="btn small danger" data-a="del" data-id="${esc(e.id)}">Eliminar</button>` : ""}</td></tr>`;
+  }).join("") : `<tr><td colspan="7" class="empty">${EVALS.length ? "No hay evaluaciones con esos filtros." : "Todavía no hay evaluaciones."}</td></tr>`;
 }
-$("#tb-lista").addEventListener("click", async e => {
+["#fe-cat", "#fe-ev"].forEach(s => $(s).addEventListener("change", pintarEvals));
+$("#fe-q").addEventListener("input", pintarEvals); $("#fe-act").addEventListener("click", cargar);
+$("#fe-tb").addEventListener("click", async e => {
   const b = e.target.closest("button[data-a]"); if (!b) return;
-  const id = b.dataset.id, d = DATOS.find(x => x.id === id);
-  if (b.dataset.a === "ed") editar(id);
-  if (b.dataset.a === "pr") imprimir(d);
-  if (b.dataset.a === "ver") verArchivo(d.archivos[0], d.archivos);
+  const ev = EVALS.find(x => x.id === b.dataset.id);
+  const obra = OBRAS.find(o => o.id === ev.obraId) || { id: ev.obraId, categoria: ev.categoria, titulo: ev.obra, autor: "", archivos: [] };
+  if (b.dataset.a === "pr") imprimir(ev, obra);
+  if (b.dataset.a === "ed") abrirRubrica(obra, ev);
   if (b.dataset.a === "del") {
-    if (!confirm(`¿Eliminar la evaluación de "${d.obra}"? Esta acción no se puede deshacer.`)) return;
+    if (!confirm(`¿Eliminar la evaluación de ${ev.evaluador} para "${ev.obra}"? Esta acción no se puede deshacer.`)) return;
     b.disabled = true;
-    try { await api("eliminar", { id }); toast("Evaluación eliminada."); await cargar(); }
-    catch (err) { toast("No se pudo eliminar: " + err.message); b.disabled = false; }
+    try { await api("eliminarEvaluacion", { id: ev.id }); toast("Evaluación eliminada."); await cargar(); }
+    catch (err) { toast(errMsg(err)); b.disabled = false; }
   }
 });
-["#fl-cat", "#fl-eval"].forEach(s => $(s).addEventListener("change", pintarLista));
-$("#fl-q").addEventListener("input", pintarLista);
-$("#btn-refrescar").addEventListener("click", cargar);
-
-$("#btn-csv").addEventListener("click", () => {
+$("#fe-csv").addEventListener("click", () => {
   const rows = filtrados(); if (!rows.length) { toast("No hay datos para exportar."); return; }
-  const head = ["Fecha", "Evaluadora", "Categoría", "Obra", "Participante", "Cumple", "No cumple", "Lugar propuesto", "Observaciones"];
+  const autor = id => (OBRAS.find(o => o.id === id) || {}).autor || "";
+  const head = ["Fecha", "Evaluador", "Categoría", "Obra", "Autor", "Cumple", "No cumple", "Lugar propuesto", "Observaciones", "Corregida por"];
   const q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const csv = [head, ...rows.map(d => [fecha(d.fecha), d.evaluador, RUBRICAS[d.categoria]?.nombre, d.obra, d.participante, d.si, d.no, LUGAR_TXT[d.lugar || ""], d.observaciones])]
+  const csv = [head, ...rows.map(e => [fecha(e.fecha), e.evaluador, catNom(e.categoria), e.obra, autor(e.obraId), e.si, e.no, LUGAR_TXT[e.lugar || ""], e.observaciones, e.editadoPor])]
     .map(r => r.map(q).join(",")).join("\r\n");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
   a.download = "evaluaciones-certamen.csv"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 });
 
-/* ---------- Resumen (Administrador) ---------- */
+/* ---------- Resumen ---------- */
 function pintarResumen() {
-  const evs = [...new Set(["Ashly Rodríguez", "Kathya Ugalde", ...DATOS.map(d => d.evaluador)])];
-  const norm = s => String(s).trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ");
   let html = "";
   Object.keys(RUBRICAS).forEach(cat => {
-    const g = {};
-    DATOS.filter(d => d.categoria === cat).forEach(d => {
-      const k = norm(d.obra); (g[k] = g[k] || { obra: d.obra, ev: {} }).ev[d.evaluador] = d;
-    });
-    const obras = Object.values(g); if (!obras.length) return;
-    const pts = o => Object.values(o.ev).reduce((s, d) => s + ({ "1": 3, "2": 2, "3": 1 }[d.lugar] || 0), 0);
-    obras.sort((a, b) => pts(b) - pts(a) || a.obra.localeCompare(b.obra));
+    const obras = OBRAS.filter(o => o.categoria === cat); if (!obras.length) return;
     const tot = criterios(cat).length;
-    html += `<h3>${RUBRICAS[cat].nombre}</h3><div class="tbl-wrap"><table><thead><tr><th>Obra</th>${evs.map(e => `<th>${esc(e)}</th>`).join("")}<th>Puntos</th></tr></thead><tbody>${
-      obras.map(o => `<tr><td><b>${esc(o.obra)}</b></td>${evs.map(e => { const d = o.ev[e];
-        return `<td>${d ? `${d.lugar ? `<span class="pill">${LUGAR_TXT[d.lugar]}</span>` : `<span class="count">Sin propuesta</span>`}<br><span class="count">Cumple ${d.si}/${tot}</span>` : `<span class="count">Pendiente</span>`}</td>`; }).join("")}<td><b>${pts(o)}</b></td></tr>`).join("")
-    }</tbody></table></div>`;
+    const filas = obras.map(o => {
+      const ev = evalsDe(o.id), pts = ev.reduce((s, e) => s + ({ "1": 3, "2": 2, "3": 1 }[e.lugar] || 0), 0);
+      const n = l => ev.filter(e => e.lugar === l).length;
+      const prom = ev.length ? Math.round(ev.reduce((s, e) => s + e.si, 0) / (ev.length * tot) * 100) : null;
+      return { o, ev, pts, n1: n("1"), n2: n("2"), n3: n("3"), prom };
+    }).sort((a, b) => b.pts - a.pts || b.ev.length - a.ev.length || a.o.titulo.localeCompare(b.o.titulo));
+    html += `<h3>${RUBRICAS[cat].nombre}</h3><div class="tbl-wrap"><table><thead><tr><th>Obra</th><th>Autor</th><th>Evaluaciones</th><th>1.°</th><th>2.°</th><th>3.°</th><th>Puntos</th><th>Cumplimiento</th><th>Evaluadores</th></tr></thead><tbody>${
+      filas.map(f => `<tr><td><b>${esc(f.o.titulo)}</b></td><td>${esc(f.o.autor)}</td><td>${f.ev.length || `<span class="count">Pendiente</span>`}</td>
+        <td>${f.n1}</td><td>${f.n2}</td><td>${f.n3}</td><td><b>${f.pts}</b></td><td>${f.prom === null ? "—" : f.prom + " %"}</td>
+        <td class="count">${f.ev.map(e => `${esc(e.evaluador)} (${e.lugar ? e.lugar + ".°" : "s/p"})`).join(", ")}</td></tr>`).join("")}</tbody></table></div>`;
   });
-  $("#resumen").innerHTML = (html || `<p class="empty">Aún no hay evaluaciones.</p>`) +
-    (html ? `<p class="count">Puntos de referencia: Primer lugar = 3, Segundo = 2, Tercer = 1. La decisión final corresponde al jurado.</p>` : "");
+  $("#resumen").innerHTML = html || `<p class="empty">Aún no hay obras.</p>`;
 }
 
+/* ---------- Configuración ---------- */
+$("#cf-guardar").addEventListener("click", async () => {
+  const c = $("#cf-nuevo").value.trim(); $("#cf-err").textContent = "";
+  if (c.length < 4) { $("#cf-err").textContent = "El código debe tener al menos 4 caracteres."; return; }
+  if (!confirm(`¿Cambiar el código de evaluadores a "${c}"? El código anterior dejará de funcionar.`)) return;
+  try { const r = await api("cambiarCodigo", { codigo: c }); CODIGO = r.codigo; $("#cf-actual").textContent = CODIGO; $("#cf-nuevo").value = ""; toast("Código actualizado."); }
+  catch (e) { $("#cf-err").textContent = errMsg(e); }
+});
+
+/* ---------- Archivos: carga, visualización y descarga ---------- */
+const CACHE = {};
+async function obtenerBlob(a) {
+  if (!CACHE[a.id]) {
+    CACHE[a.id] = api("verArchivo", { id: a.id }).then(r => {
+      const bin = atob(r.b64), u8 = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      return new Blob([u8], { type: r.tipo || a.tipo });
+    }).catch(e => { delete CACHE[a.id]; throw e; });
+  }
+  return CACHE[a.id];
+}
+function guardarBlob(blob, nombre) {
+  const url = URL.createObjectURL(blob), a = document.createElement("a");
+  a.href = url; a.download = nombre; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+async function descargar(a, btn) {
+  const t = btn && btn.textContent; if (btn) { btn.disabled = true; btn.textContent = "Descargando..."; }
+  try { guardarBlob(await obtenerBlob(a), a.nombre); }
+  catch (e) { toast("No se pudo descargar: " + errMsg(e)); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = t; } }
+}
+async function descargarTodos(lista, btn) {
+  const t = btn.textContent; btn.disabled = true;
+  try { for (let i = 0; i < lista.length; i++) { btn.textContent = `Descargando ${i + 1}/${lista.length}...`; guardarBlob(await obtenerBlob(lista[i]), lista[i].nombre); await new Promise(r => setTimeout(r, 400)); } }
+  catch (e) { toast("No se pudo descargar: " + errMsg(e)); }
+  finally { btn.disabled = false; btn.textContent = t; }
+}
+// PDF.js se carga solo cuando hace falta; muestra el PDF igual en computadora, tableta y celular.
+let PDFJS = null;
+function cargarPdfJs() {
+  if (!PDFJS) PDFJS = new Promise((ok, mal) => {
+    const sc = document.createElement("script");
+    sc.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    sc.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; ok(window.pdfjsLib); };
+    sc.onerror = () => { PDFJS = null; mal(new Error("pdf.js")); };
+    document.head.appendChild(sc);
+  });
+  return PDFJS;
+}
+const URLS = new WeakMap();
+async function renderizar(cont, blob, nombre, vigente = () => true) {
+  const prev = URLS.get(cont); if (prev) { URL.revokeObjectURL(prev); URLS.delete(cont); }
+  if (blob.type !== "application/pdf") {
+    const u = URL.createObjectURL(blob); URLS.set(cont, u);
+    cont.innerHTML = `<img src="${u}" alt="${esc(nombre)}">`; return;
+  }
+  try {
+    const lib = await cargarPdfJs();
+    const pdf = await lib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()) }).promise;
+    if (!vigente()) return;
+    cont.innerHTML = "";
+    const ancho = Math.max(300, cont.clientWidth - 20), dpr = Math.min(window.devicePixelRatio || 1, 2);
+    for (let n = 1; n <= pdf.numPages; n++) {
+      if (!vigente()) return;
+      const pg = await pdf.getPage(n), v1 = pg.getViewport({ scale: 1 });
+      const vp = pg.getViewport({ scale: ancho / v1.width * dpr });
+      const c = document.createElement("canvas"); c.width = vp.width; c.height = vp.height;
+      c.setAttribute("aria-label", `${nombre}, página ${n} de ${pdf.numPages}`);
+      cont.appendChild(c);
+      await pg.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise;
+    }
+  } catch (e) {
+    // Si PDF.js no está disponible, se usa el visor del navegador.
+    const u = URL.createObjectURL(blob); URLS.set(cont, u);
+    cont.innerHTML = `<iframe src="${u}" title="${esc(nombre)}"></iframe>`;
+  }
+}
+
+// Etiqueta de cada archivo: "Página 2" si son varias fotos, o el nombre del archivo.
+function etiqueta(fs, i) {
+  const a = fs[i], todasImg = fs.every(x => x.tipo !== "application/pdf");
+  return fs.length > 1 && todasImg ? `Página ${i + 1}` : `${fs.length > 1 ? (i + 1) + ". " : ""}${a.nombre}`;
+}
+// Muestra un archivo (i >= 0) o todos seguidos (i = -1) dentro de un contenedor.
+async function mostrarEn(cont, fs, i, vigente) {
+  cont.innerHTML = `<p>Cargando...</p>`;
+  try {
+    if (i >= 0) { const b = await obtenerBlob(fs[i]); if (vigente()) await renderizar(cont, b, fs[i].nombre, vigente); return; }
+    const blobs = await Promise.all(fs.map(obtenerBlob));
+    if (!vigente()) return;
+    cont.innerHTML = "";
+    for (let k = 0; k < fs.length; k++) {
+      if (!vigente()) return;
+      const sep = document.createElement("div"); sep.className = "pag-sep"; sep.textContent = etiqueta(fs, k);
+      const box = document.createElement("div");
+      cont.append(sep, box);
+      await renderizar(box, blobs[k], fs[k].nombre, vigente);
+    }
+  } catch (e) { if (vigente()) cont.innerHTML = `<p>No se pudo abrir el archivo: ${esc(errMsg(e))}</p>`; }
+}
+
+/* ---------- Visor en ventana (pantalla completa) ---------- */
+let VLISTA = [], VACTUAL = null, VTOKEN = 0;
+// a = archivo a mostrar; a = null muestra todos los de la lista seguidos.
+async function verArchivo(a, lista) {
+  VLISTA = lista || [a]; VACTUAL = a;
+  const sel = $("#v-sel"), i = a ? VLISTA.indexOf(a) : -1;
+  sel.innerHTML = (VLISTA.length > 1 ? `<option value="-1">Todas las páginas (${VLISTA.length})</option>` : "") +
+    VLISTA.map((x, k) => `<option value="${k}">${esc(etiqueta(VLISTA, k))}</option>`).join("");
+  sel.value = String(i); show("#v-sel", VLISTA.length > 1);
+  show("#visor", true); $("#v-nombre").textContent = a ? a.nombre : `${VLISTA.length} archivos`; show("#v-bajar", true);
+  const tok = ++VTOKEN;
+  await mostrarEn($("#v-view"), VLISTA, i, () => tok === VTOKEN);
+}
+function cerrarVisor() { VTOKEN++; show("#visor", false); $("#v-view").innerHTML = ""; }
+$("#v-bajar").addEventListener("click", e => { e.preventDefault(); if (VACTUAL) descargar(VACTUAL, e.currentTarget); else if (VLISTA.length && VLISTA[0].id) descargarTodos(VLISTA, e.currentTarget); });
+$("#v-cerrar").addEventListener("click", cerrarVisor);
+$("#v-sel").addEventListener("change", e => { const i = +e.target.value; verArchivo(i < 0 ? null : VLISTA[i], VLISTA); });
+$("#visor").addEventListener("click", e => { if (e.target.id === "visor") cerrarVisor(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#visor").classList.contains("hidden")) cerrarVisor(); });
+
 /* ---------- Impresión ---------- */
-function imprimir(d) {
-  const r = RUBRICAS[d.categoria], R = d.respuestas || {};
+function imprimir(ev, obra) {
+  const r = RUBRICAS[ev.categoria], R = ev.respuestas || {};
   const m = k => [R[k] === "si" ? "✓" : "", R[k] === "no" ? "✘" : ""];
   let h = `<h2>${r.nombre.toUpperCase()} (la obra debe ser original)</h2>
     <p><b>Definición de ${r.nombre.toLowerCase()}:</b> ${r.def}</p>
-    <p><b>${r.obra}:</b> ${esc(d.obra)}${d.participante ? ` &nbsp; <b>Participante:</b> ${esc(d.participante)}` : ""}</p>`;
+    <p><b>Obra:</b> ${esc(ev.obra)}${obra.autor ? ` &nbsp; <b>Autor:</b> ${esc(obra.autor)}` : ""}</p>`;
   r.secciones.forEach((s, si) => {
     h += `<table><tr><th>${s.titulo} (${s.inst})</th><th>SÍ ✓</th><th>NO ✘</th></tr>`;
     if (s.bloque) { const [a, b] = m(`s${si}-b`); h += `<tr><td><ul style="margin:0;padding-left:18px">${s.items.map(i => `<li>${i}</li>`).join("")}</ul></td><td class="c">${a}</td><td class="c">${b}</td></tr>`; }
     else s.items.forEach((t, ii) => { const [a, b] = m(`s${si}-i${ii}`); h += `<tr><td>${t}</td><td class="c">${a}</td><td class="c">${b}</td></tr>`; });
     h += `</table>`;
   });
-  const x = v => d.lugar === v ? "X" : "&nbsp;&nbsp;";
+  const x = v => ev.lugar === v ? "X" : "&nbsp;&nbsp;";
   h += `<p><b>Propongo esta obra artística para que sea considerada en:</b> Primer lugar ( ${x("1")} ) &nbsp; Segundo lugar ( ${x("2")} ) &nbsp; Tercer lugar ( ${x("3")} )</p>`;
-  if ((d.archivos || []).length) h += `<p><b>Archivos adjuntos:</b> ${d.archivos.map(x => esc(x.nombre)).join(", ")}</p>`;
-  if (d.observaciones) h += `<p><b>Observaciones:</b> ${esc(d.observaciones)}</p>`;
-  h += `<div class="firma"><div>${esc(d.evaluador)}<br>Nombre y firma de la persona evaluadora</div><div>${fecha(d.fecha)}<br>Fecha</div></div>`;
+  if (ev.observaciones) h += `<p><b>Observaciones:</b> ${esc(ev.observaciones)}</p>`;
+  h += `<div class="firma"><div>${esc(ev.evaluador)}<br>Nombre y firma de la persona evaluadora</div><div>${fecha(ev.fecha)}<br>Fecha</div></div>`;
   $("#print").innerHTML = h; window.print();
 }
 
 /* ---------- Inicio ---------- */
-try { const s = JSON.parse(ss("cl_ses") || "null"); if (s && s.usuario) { SES = s; entrar(); } } catch (e) {}
+try { const s = JSON.parse(ss("cl_ses") || "null"); if (s && s.tipo) { SES = s; entrar(); } } catch (e) {}
 </script>
 </body>
 </html>
