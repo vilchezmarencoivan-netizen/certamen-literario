@@ -820,8 +820,12 @@ async function obtenerBlob(a) {
     CACHE[a.id] = (async () => {
       // El archivo llega por partes (una tras otra); se verifica que el tamaño final coincida.
       const primera = await api("verArchivo", { id: a.id, parte: 0 });
-      const trozos = [b64ABlob(primera.b64)];
-      for (let k = 1; k < (primera.partes || 1); k++) trozos.push(b64ABlob((await api("verArchivo", { id: a.id, parte: k })).b64));
+      const n = primera.partes || 1, trozos = new Array(n);
+      trozos[0] = b64ABlob(primera.b64);
+      // Las demás partes se piden de a 3 a la vez (el servidor ya las tiene listas en caché).
+      let sig = 1;
+      const trabajador = async () => { while (sig < n) { const k = sig++; trozos[k] = b64ABlob((await api("verArchivo", { id: a.id, parte: k })).b64); } };
+      await Promise.all([trabajador(), trabajador(), trabajador()]);
       const blob = new Blob(trozos, { type: primera.tipo || a.tipo });
       if (primera.total && blob.size !== primera.total) throw new Error(`el archivo llegó incompleto (${blob.size} de ${primera.total} bytes). Intente de nuevo.`);
       return blob;
@@ -897,8 +901,13 @@ async function mostrarEn(cont, fs, i, vigente) {
   cont.innerHTML = `<p>Cargando...</p>`;
   try {
     if (i >= 0) { const b = await obtenerBlob(fs[i]); if (vigente()) await renderizar(cont, b, fs[i].nombre, vigente); return; }
-    const blobs = [];
-    for (let k = 0; k < fs.length; k++) { if (fs.length > 1) cont.innerHTML = `<p>Cargando página ${k + 1} de ${fs.length}...</p>`; blobs.push(await obtenerBlob(fs[k])); }
+    // Se cargan de a 3 páginas a la vez y se muestran en orden.
+    let listos = 0;
+    const aviso = () => { if (fs.length > 1 && vigente()) cont.innerHTML = `<p>Cargando páginas: ${listos} de ${fs.length}...</p>`; };
+    aviso();
+    const blobs = new Array(fs.length); let sig = 0;
+    const trabajador = async () => { while (sig < fs.length) { const k = sig++; blobs[k] = await obtenerBlob(fs[k]); listos++; aviso(); } };
+    await Promise.all([trabajador(), trabajador(), trabajador()]);
     if (!vigente()) return;
     cont.innerHTML = "";
     for (let k = 0; k < fs.length; k++) {
