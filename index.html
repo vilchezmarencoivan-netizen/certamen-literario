@@ -454,9 +454,10 @@ if (!API) show("#sin-api", true);
 async function ingresar(form, cred, errSel) {
   const btn = $("button[type=submit]", form); $(errSel).textContent = ""; btn.disabled = true;
   try {
-    const r = await api("login", {}, cred);
+    // Un solo viaje al servidor: valida el ingreso y trae las obras al mismo tiempo.
+    const r = await api("datos", { ingreso: true }, cred);
     SES = Object.assign(cred, { nombre: r.usuario.nombre, rol: r.usuario.rol });
-    ss("cl_ses", JSON.stringify(SES)); entrar();
+    ss("cl_ses", JSON.stringify(SES)); entrar(r);
   } catch (e) { $(errSel).textContent = errMsg(e); }
   finally { btn.disabled = false; }
 }
@@ -466,22 +467,36 @@ $("#f-staff").addEventListener("submit", e => { e.preventDefault();
   ingresar(e.target, { tipo: "staff", usuario: $("#ls-user").value, clave: $("#ls-pass").value }, "#ls-err"); });
 $("#btn-salir").addEventListener("click", () => { ss("cl_ses", null); location.reload(); });
 
-function entrar() {
+function entrar(datosIniciales) {
   show("#login", false); show("#who", true);
   $("#who-name").textContent = SES.tipo === "staff" ? `${SES.nombre} (${SES.rol === "admin" ? "Administrador" : "Moderadora"})` : SES.nombre;
   if (SES.tipo === "staff") { show("#st", true); show("#tab-config", SES.rol === "admin"); vista("obras"); }
   else show("#ev", true);
-  cargar();
+  if (datosIniciales) aplicarDatos(datosIniciales); else cargar();
 }
 async function cargar() {
-  try {
-    const r = await api("datos");
+  try { aplicarDatos(await api("datos")); }
+  catch (e) { toast("No se pudieron cargar los datos: " + errMsg(e)); }
+}
+function aplicarDatos(r) {
+  {
     OBRAS = (r.obras || []).sort((a, b) => a.categoria.localeCompare(b.categoria) || a.titulo.localeCompare(b.titulo));
     EVALS = (r.evaluaciones || []).sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
     CODIGO = r.codigo || "";
     if (SES.tipo === "staff") { pintarObras(); refrescarEvaluadores(); pintarEvals(); pintarResumen(); $("#cf-actual").textContent = CODIGO; }
-    else pintarGrid();
-  } catch (e) { toast("No se pudieron cargar los datos: " + errMsg(e)); }
+    else { pintarGrid(); precargar(); }
+  }
+}
+// Mientras el evaluador mira la lista, se van descargando en segundo plano las obras que le faltan,
+// para que al abrirlas aparezcan casi de inmediato.
+let PRECARGA = false;
+async function precargar() {
+  if (PRECARGA) return; PRECARGA = true;
+  await new Promise(r => setTimeout(r, 800));
+  try {
+    for (const o of OBRAS.filter(x => !x.evaluada).slice(0, 8))
+      for (const a of (o.archivos || [])) { if (!SES) return; try { await obtenerBlob(a); } catch (e) {} }
+  } finally { PRECARGA = false; }
 }
 
 /* ================= EVALUADOR ================= */
@@ -576,10 +591,10 @@ $("#rb-enviar").addEventListener("click", async () => {
   if (!RB.ev && !confirm(`¿Enviar la evaluación de "${RB.obra.titulo}"? Una vez enviada no se puede modificar.`)) return;
   const btn = $("#rb-enviar"); btn.disabled = true;
   try {
-    if (RB.ev) await api("editarEvaluacion", { datos: Object.assign(datos, { id: RB.ev.id }) });
-    else await api("evaluar", { datos: Object.assign(datos, { obraId: RB.obra.id }) });
+    const r = RB.ev ? await api("editarEvaluacion", { conDatos: true, datos: Object.assign(datos, { id: RB.ev.id }) })
+                    : await api("evaluar", { conDatos: true, datos: Object.assign(datos, { obraId: RB.obra.id }) });
     toast(RB.ev ? "Corrección guardada." : "Evaluación enviada. ¡Gracias!");
-    cerrarRubrica(); await cargar();
+    cerrarRubrica(); if (r.obras) aplicarDatos(r); else await cargar();
   } catch (e) { err.textContent = "No se pudo guardar: " + errMsg(e); }
   finally { btn.disabled = false; }
 });
@@ -615,7 +630,7 @@ $("#ob-tb").addEventListener("click", async e => {
   if (b.dataset.a === "del") {
     if (!confirm(`¿Eliminar la obra "${o.titulo}" y sus archivos? Esta acción no se puede deshacer.`)) return;
     b.disabled = true;
-    try { await api("eliminarObra", { id: o.id }); toast("Obra eliminada."); await cargar(); }
+    try { const r = await api("eliminarObra", { id: o.id, conDatos: true }); toast("Obra eliminada."); if (r.obras) aplicarDatos(r); else await cargar(); }
     catch (err) { toast(errMsg(err)); b.disabled = false; }
   }
 });
@@ -709,11 +724,11 @@ $("#of-guardar").addEventListener("click", async () => {
   let k = 0; const orden = PAGS.map(p => p.ex ? "id:" + p.ex.id : "n:" + (k++));
   const btn = $("#of-guardar"); btn.disabled = true; btn.textContent = nuevos.length ? "Subiendo archivos..." : "Guardando...";
   try {
-    await api("guardarObra", { datos: { id: OF ? OF.id : undefined, categoria: OF_CAT, titulo, autor, orden,
+    const r = await api("guardarObra", { conDatos: true, datos: { id: OF ? OF.id : undefined, categoria: OF_CAT, titulo, autor, orden,
       archivos: PAGS.filter(p => p.ex).map(p => ({ id: p.ex.id })),
       nuevosArchivos: nuevos.map(({ nombre, tipo, tam, b64 }) => ({ nombre, tipo, tam, b64 })) } });
     toast(OF ? "Obra actualizada." : "Obra subida.");
-    limpiarPags(); show("#v-obra-form", false); show("#v-obras", true); await cargar();
+    limpiarPags(); show("#v-obra-form", false); show("#v-obras", true); if (r.obras) aplicarDatos(r); else await cargar();
   } catch (e) { err.textContent = "No se pudo guardar: " + errMsg(e); }
   finally { btn.disabled = false; btn.textContent = "Guardar obra"; }
 });
@@ -753,7 +768,7 @@ $("#fe-tb").addEventListener("click", async e => {
   if (b.dataset.a === "del") {
     if (!confirm(`¿Eliminar la evaluación de ${ev.evaluador} para "${ev.obra}"? Esta acción no se puede deshacer.`)) return;
     b.disabled = true;
-    try { await api("eliminarEvaluacion", { id: ev.id }); toast("Evaluación eliminada."); await cargar(); }
+    try { const r = await api("eliminarEvaluacion", { id: ev.id, conDatos: true }); toast("Evaluación eliminada."); if (r.obras) aplicarDatos(r); else await cargar(); }
     catch (err) { toast(errMsg(err)); b.disabled = false; }
   }
 });
