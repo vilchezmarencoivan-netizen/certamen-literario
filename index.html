@@ -786,13 +786,25 @@ $("#cf-guardar").addEventListener("click", async () => {
 
 /* ---------- Archivos: carga, visualización y descarga ---------- */
 const CACHE = {};
+// Convierte el texto base64 que envía el servidor en un archivo. Tolera saltos de línea, espacios y la
+// variante "web-safe"; si el contenido llega dañado, el mensaje indica qué recibió para poder revisarlo.
+function b64ABlob(b64, tipo) {
+  if (typeof b64 !== "string" || !b64) throw new Error(`el servidor no envió el contenido (recibido: ${typeof b64}).`);
+  let s = b64.replace(/\s+/g, "").replace(/-/g, "+").replace(/_/g, "/");
+  const malos = s.match(/[^A-Za-z0-9+/=]/g);
+  if (malos) throw new Error(`contenido dañado: ${s.length} caracteres, ${malos.length} inválidos (${[...new Set(malos)].slice(0, 5).join(" ")}), inicio "${s.slice(0, 12)}".`);
+  s = s.replace(/=+$/, ""); while (s.length % 4) s += "=";
+  let bin;
+  try { bin = atob(s); }
+  catch (e) { throw new Error(`no se pudo decodificar (${s.length} caracteres, inicio "${s.slice(0, 12)}", final "${s.slice(-8)}").`); }
+  const u8 = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  return new Blob([u8], { type: tipo || "application/octet-stream" });
+}
 async function obtenerBlob(a) {
   if (!CACHE[a.id]) {
-    CACHE[a.id] = api("verArchivo", { id: a.id }).then(r => {
-      const bin = atob(r.b64), u8 = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
-      return new Blob([u8], { type: r.tipo || a.tipo });
-    }).catch(e => { delete CACHE[a.id]; throw e; });
+    CACHE[a.id] = api("verArchivo", { id: a.id }).then(r => b64ABlob(r.b64, r.tipo || a.tipo))
+      .catch(e => { delete CACHE[a.id]; throw e; });
   }
   return CACHE[a.id];
 }
