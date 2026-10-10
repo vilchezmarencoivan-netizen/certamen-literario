@@ -418,12 +418,26 @@ Object.keys(RUBRICAS).forEach(k => ["#ev-cat", "#ob-cat", "#fe-cat"].forEach(s =
 const API = (window.CONFIG && window.CONFIG.API_URL || "").trim();
 let SES = null;      // staff: {tipo:'staff', usuario, clave, nombre, rol} | evaluador: {tipo:'evaluador', evaluador, codigo, nombre}
 let OBRAS = [], EVALS = [], CODIGO = "";
+// Acciones de solo lectura: si la respuesta llega mal se reintenta sola. Las que guardan no se reintentan.
+const LECTURA = ["login", "datos", "verArchivo"];
 async function api(accion, extra = {}, cred) {
   const c = cred || SES;
   const base = c.tipo === "staff" ? { usuario: c.usuario, clave: c.clave } : { evaluador: c.evaluador, codigo: c.codigo };
-  const r = await fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign({ accion }, base, extra)) });
-  let j;
-  try { j = await r.json(); } catch (e) { throw new Error("El servidor no respondió correctamente. Espere unos segundos e intente de nuevo."); }
+  const intentos = LECTURA.includes(accion) ? 4 : 1;
+  let j = null;
+  for (let n = 1; n <= intentos; n++) {
+    const eco = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    j = null;
+    try {
+      const r = await fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign({ accion, eco }, base, extra)) });
+      j = await r.json();
+      if (j && j.eco !== undefined && j.eco !== eco) j = null; // respuesta que no corresponde a esta solicitud
+    } catch (e) { if (e.message === "Failed to fetch" && n === intentos) throw e; j = null; }
+    if (j) break;
+    if (n < intentos) await new Promise(r => setTimeout(r, 600 * n));
+  }
+  if (!j) throw new Error(intentos > 1 ? "El servidor no respondió correctamente. Espere unos segundos e intente de nuevo."
+    : "No hubo confirmación del servidor. Revise en la lista si se guardó antes de intentarlo de nuevo.");
   if (!j.ok) {
     if (cred === undefined && /contraseña|código de acceso/i.test(j.error || "")) { ss("cl_ses", null); toast(j.error); setTimeout(() => location.reload(), 1500); }
     throw new Error(j.error || "Error del servidor");
@@ -803,8 +817,15 @@ function b64ABlob(b64, tipo) {
 }
 async function obtenerBlob(a) {
   if (!CACHE[a.id]) {
-    CACHE[a.id] = api("verArchivo", { id: a.id }).then(r => b64ABlob(r.b64, r.tipo || a.tipo))
-      .catch(e => { delete CACHE[a.id]; throw e; });
+    CACHE[a.id] = (async () => {
+      // El archivo llega por partes (una tras otra); se verifica que el tamaño final coincida.
+      const primera = await api("verArchivo", { id: a.id, parte: 0 });
+      const trozos = [b64ABlob(primera.b64)];
+      for (let k = 1; k < (primera.partes || 1); k++) trozos.push(b64ABlob((await api("verArchivo", { id: a.id, parte: k })).b64));
+      const blob = new Blob(trozos, { type: primera.tipo || a.tipo });
+      if (primera.total && blob.size !== primera.total) throw new Error(`el archivo llegó incompleto (${blob.size} de ${primera.total} bytes). Intente de nuevo.`);
+      return blob;
+    })().catch(e => { delete CACHE[a.id]; throw e; });
   }
   return CACHE[a.id];
 }
@@ -876,7 +897,8 @@ async function mostrarEn(cont, fs, i, vigente) {
   cont.innerHTML = `<p>Cargando...</p>`;
   try {
     if (i >= 0) { const b = await obtenerBlob(fs[i]); if (vigente()) await renderizar(cont, b, fs[i].nombre, vigente); return; }
-    const blobs = await Promise.all(fs.map(obtenerBlob));
+    const blobs = [];
+    for (let k = 0; k < fs.length; k++) { if (fs.length > 1) cont.innerHTML = `<p>Cargando página ${k + 1} de ${fs.length}...</p>`; blobs.push(await obtenerBlob(fs[k])); }
     if (!vigente()) return;
     cont.innerHTML = "";
     for (let k = 0; k < fs.length; k++) {
